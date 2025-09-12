@@ -20,6 +20,7 @@ import SimpleCropUpload from '@/components/ui/SimpleCropUploadWrapper';
 import { useAuthStore } from '@/lib/store/auth';
 import { productRepository } from '@/lib/firebase/repositories';
 import { Product } from '@/types/models';
+import CreateButton from '@/components/ui/CreateButton';
 
 interface ProductVariant {
   name: string;
@@ -371,13 +372,11 @@ export default function AddProductPage({ params }: AddProductPageProps) {
               Discard
             </NeuButton>
             
-            <NeuButton
+            <CreateButton
               onClick={handleSaveProduct}
-              className="flex-1"
               disabled={!isFormValid() || isLoading}
-            >
-              {isLoading ? 'Saving...' : 'Save Product'}
-            </NeuButton>
+              text={isLoading ? 'Saving...' : 'Save Product'}
+            />
           </div>
 
           {/* Bottom Spacing */}
@@ -487,7 +486,7 @@ function ProductVariantsSection({
               <div>
                 <span className="font-medium">{variant.name}:</span>
                 <span className="ml-2 text-gray-600">{variant.value}</span>
-                <span className="ml-4 text-green-600 font-medium">${variant.price.toFixed(2)}</span>
+                <span className="ml-4 text-green-600 font-medium">R{variant.price.toFixed(2)}</span>
               </div>
               <button
                 onClick={() => onRemoveVariant(index)}
@@ -540,7 +539,7 @@ function SizeVariantsSection({
             <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div>
                 <span className="font-medium">Size {sizeVariant.size}</span>
-                <span className="ml-4 text-green-600 font-medium">${sizeVariant.price.toFixed(2)}</span>
+                <span className="ml-4 text-green-600 font-medium">R{sizeVariant.price.toFixed(2)}</span>
                 <span className="ml-4 text-gray-600">Stock: {sizeVariant.stockQuantity}</span>
               </div>
               <button

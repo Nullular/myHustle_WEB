@@ -1,18 +1,22 @@
-'use client';
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
-  Share, 
   Heart, 
   Star, 
   MapPin, 
   Phone,
-  ChevronRight
+  ChevronRight,
+  MessageCircle
 } from 'lucide-react';
-import { Shop, Product, Service } from '@/types';
+import FavoriteButton from '@/components/ui/FavoriteButton';
+import ShareButton from '@/components/ui/ShareButton';
+import { Shop, Product, Service, User } from '@/types';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import NeuInsetBox from '@/components/ui/NeuInsetBox';
+import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
+import ItemCard from '@/components/ui/ItemCard';
+import ServiceCard from '@/components/ui/ServiceCard';
 
 interface MobileStoreProfileProps {
     router: AppRouterInstance;
@@ -22,6 +26,8 @@ interface MobileStoreProfileProps {
     isFavorite: boolean;
     toggleFavorite: () => void;
     handleShare: () => void;
+    user: User | null;
+    storeId: string;
     getProductImageUrl: (item: Product) => string | null;
     getServiceImageUrl: (item: Service) => string | null;
 }
@@ -34,114 +40,125 @@ export default function MobileStoreProfileScreen({
   isFavorite,
   toggleFavorite,
   handleShare,
+  user,
+  storeId,
   getProductImageUrl,
   getServiceImageUrl,
 }: MobileStoreProfileProps) {
+
+  const storeStatus = useMemo(() => {
+    if (!shop || !shop.openTime24 || !shop.closeTime24) {
+      return { statusList: ['Hours unavailable'], isOpen: false };
+    }
+    try {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentMinutes = currentHour * 60 + currentMinute;
+      const [openH, openM] = shop.openTime24.split(':').map((x: string) => parseInt(x) || 8);
+      const [closeH, closeM] = shop.closeTime24.split(':').map((x: string) => parseInt(x) || 18);
+      const openMinutes = openH * 60 + openM;
+      const closeMinutes = closeH === 24 && closeM === 0 ? 24 * 60 : closeH * 60 + closeM;
+      const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+      if (isOpen) {
+        const closeTimeFormatted = closeH === 24 && closeM === 0 
+          ? '12:00 AM'
+          : `${closeH > 12 ? closeH - 12 : closeH || 12}:${closeM.toString().padStart(2, '0')} ${closeH < 12 ? 'AM' : 'PM'}`;
+        return { statusList: ['Open Now', `Closes at ${closeTimeFormatted}`], isOpen: true };
+      } else {
+        const openTimeFormatted = `${openH > 12 ? openH - 12 : openH || 12}:${openM.toString().padStart(2, '0')} ${openH < 12 ? 'AM' : 'PM'}`;
+        return { statusList: ['Closed', `Opens at ${openTimeFormatted}`], isOpen: false };
+      }
+    } catch {
+      return { statusList: ['Hours unavailable'], isOpen: false };
+    }
+  }, [shop]);
+
   return (
     <div className="bg-gray-100 min-h-screen">
-      {/* Header */}
-      <div className="relative h-48 bg-gray-300">
-        {shop.bannerUrl ? (
-          <img src={shop.bannerUrl} alt={`${shop.name} banner`} className="w-full h-full object-cover" />
-        ) : (
-          <div className="flex items-center justify-center h-full text-white font-bold text-lg bg-gradient-to-r from-blue-500 to-purple-600">
-            {shop.name}
-          </div>
-        )}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-          <button aria-label="Go back" onClick={() => router.back()} className="bg-white/80 p-2 rounded-full shadow">
-            <ArrowLeft className="h-5 w-5 text-gray-700" />
+      <div className="relative w-full h-80 overflow-hidden">
+        <div className="relative w-full h-52 overflow-hidden">
+          <img
+            src={shop.bannerUrl && (shop.bannerUrl.startsWith('http') || shop.bannerUrl.startsWith('/')) ? shop.bannerUrl : '/placeholder.svg'}
+            alt={`${shop.name} banner`}
+            className="w-full h-full object-cover rounded-b-3xl"
+          />
+        </div>
+        
+        <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+          <button
+            onClick={() => router.back()}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-md"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4 text-gray-700" />
           </button>
           <div className="flex space-x-2">
-            <button aria-label="Share" onClick={handleShare} className="bg-white/80 p-2 rounded-full shadow">
-              <Share className="h-5 w-5 text-gray-700" />
-            </button>
-            <button aria-label="Toggle favorite" onClick={toggleFavorite} className="bg-white/80 p-2 rounded-full shadow">
-              <Heart className={`h-5 w-5 ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-700'}`} />
-            </button>
+            <ShareButton onClick={handleShare} />
+            <FavoriteButton 
+              isFavorite={isFavorite}
+              toggleFavorite={() => toggleFavorite()}
+            />
           </div>
         </div>
-      </div>
 
-      {/* Store Info */}
-      <div className="bg-white p-4 -mt-10 rounded-t-2xl shadow-lg">
-        <div className="flex items-end space-x-4">
-          <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md -mt-10 bg-gray-200">
-            {shop.logoUrl && !shop.logoUrl.startsWith('content://') ? (
-              <img src={shop.logoUrl} alt={`${shop.name} logo`} className="w-full h-full object-cover rounded-lg" />
-            ) : (
-              <div className="flex items-center justify-center h-full text-white font-bold text-lg bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-                {shop.name.charAt(0)}
+        <div className="absolute bottom-8 left-5 right-5">
+          <div className="flex items-center space-x-4">
+            <div className="w-20 h-20 rounded-3xl p-2 bg-white">
+              <img
+                src={shop.logoUrl && (shop.logoUrl.startsWith('http') || shop.logoUrl.startsWith('/')) ? shop.logoUrl : '/placeholder.svg'}
+                alt={`${shop.name} logo`}
+                className="w-full h-full object-cover rounded-2xl"
+              />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold mb-1 text-gray-800">{shop.name}</h1>
+              <div className="flex items-center space-x-1">
+                <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                <span className="text-lg font-bold text-gray-800">
+                  {shop.rating.toFixed(1)}
+                </span>
               </div>
-            )}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">{shop.name}</h1>
-            <div className="flex items-center text-sm text-gray-600">
-              <Star className="h-4 w-4 text-yellow-500 fill-current mr-1" />
-              <span>{shop.rating.toFixed(1)}</span>
-              <span className="ml-2">{shop.category}</span>
             </div>
           </div>
         </div>
-        <p className="mt-4 text-gray-700">{shop.description}</p>
       </div>
 
-      {/* Main Content */}
-      <div className="p-4 space-y-4">
-        {/* Products */}
+      <div className="p-4 space-y-4 -mt-4">
+        <NeuDescriptionBox>
+          <h2 className="text-lg font-bold mb-2 text-gray-900">About</h2>
+          <p className="text-gray-700 leading-6">{shop.description}</p>
+        </NeuDescriptionBox>
+
         {products.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="text-lg font-bold mb-2">Products</h2>
+          <NeuInsetBox>
+            <h2 className="text-lg font-bold mb-3 text-gray-900">Products</h2>
             <div className="flex space-x-4 overflow-x-auto pb-2">
               {products.map((item) => (
-                <Link href={`/item/${item.id}`} key={`product-${item.id}`} className="flex-shrink-0 w-32">
-                  <div className="rounded-lg overflow-hidden border">
-                    <div className="h-24 bg-gray-200">
-                      {getProductImageUrl(item) && (
-                        <img src={getProductImageUrl(item) ?? '/placeholder.svg'} alt={item.name} className="w-full h-full object-cover" />
-                      )}
-                    </div>
-                    <div className="p-2">
-                      <h3 className="font-semibold text-sm truncate">{item.name}</h3>
-                      <p className="text-xs text-gray-600">${item.price.toFixed(2)}</p>
-                    </div>
-                  </div>
+                <Link href={`/item/${item.id}`} key={`product-${item.id}`} className="flex-shrink-0">
+                  <ItemCard item={item} imageUrl={getProductImageUrl(item)} />
                 </Link>
               ))}
             </div>
-          </div>
+          </NeuInsetBox>
         )}
 
-        {/* Services */}
         {services.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="text-lg font-bold mb-2">Services</h2>
-            <div className="space-y-2">
+          <NeuInsetBox>
+            <h2 className="text-lg font-bold mb-3 text-gray-900">Services</h2>
+            <div className="flex space-x-4 overflow-x-auto pb-2">
               {services.map((item) => (
-                <Link href={`/service/${item.id}`} key={`service-${item.id}`}>
-                  <div className="flex items-center p-2 border rounded-lg">
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden mr-4">
-                      {getServiceImageUrl(item) && (
-                        <img src={getServiceImageUrl(item) ?? '/placeholder.svg'} alt={item.name} className="w-full h-full object-cover" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{item.name}</h3>
-                      <p className="text-sm text-gray-600">${item.basePrice.toFixed(2)}</p>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                  </div>
+                <Link href={`/service/${item.id}`} key={`service-${item.id}`} className="flex-shrink-0">
+                  <ServiceCard service={item} imageUrl={getServiceImageUrl(item)} />
                 </Link>
               ))}
             </div>
-          </div>
+          </NeuInsetBox>
         )}
 
-        {/* Contact */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-lg font-bold mb-2">Contact</h2>
-          <div className="space-y-2">
+        <div className="neu-card rounded-3xl p-4">
+          <h2 className="text-lg font-bold mb-3 text-gray-900">Contact</h2>
+          <div className="space-y-3">
             <div className="flex items-center">
               <MapPin className="h-5 w-5 text-blue-600 mr-3" />
               <span className="text-gray-700">{shop.address || shop.location}</span>
@@ -151,6 +168,10 @@ export default function MobileStoreProfileScreen({
               <span className="text-gray-700">{shop.phone}</span>
             </div>
           </div>
+           <button className="w-full mt-4 h-8 rounded-xl neu-pressed bg-blue-600 text-white font-medium flex items-center justify-center space-x-2">
+            <MessageCircle className="h-4 w-4" />
+            <span>Contact Store Owner</span>
+          </button>
         </div>
       </div>
     </div>

@@ -501,7 +501,7 @@ export default function BookingScreen({
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Price:</span>
               <span className="text-2xl font-bold text-purple-600">
-                ${service.basePrice} {service.currency || 'USD'}
+                R{service.basePrice}
               </span>
             </div>
             <div className="flex justify-between items-center mt-2">

@@ -79,3 +79,9 @@ div select {
 * select {
   color: #000000 !important;
 }
+
+.neu-inset-box {
+  border-radius: 25px;
+  background: #ebeaea;
+  box-shadow: inset 13px 13px 13px #5e5e5e, inset -13px -13px 13px #ffffff;
+}

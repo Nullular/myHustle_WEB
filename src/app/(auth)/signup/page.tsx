@@ -8,7 +8,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import { NeuButton, NeuCard, NeuSwitch } from '@/components/ui';
+import { NeuButton, NeuSwitch } from '@/components/ui';
+import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
 import { AuthService } from '@/lib/firebase/auth';
 import { useAuthStore } from '@/lib/store/auth';
 import { SignUpForm, UserType } from '@/types';
@@ -96,7 +97,7 @@ export default function SignUpPage() {
         </div>
 
         {/* SignUp Form Card */}
-        <NeuCard className="p-6">
+        <NeuDescriptionBox>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Error Message */}
             {error && (
@@ -250,7 +251,7 @@ export default function SignUpPage() {
               </p>
             </div>
           </form>
-        </NeuCard>
+        </NeuDescriptionBox>
       </div>
     </div>
   );

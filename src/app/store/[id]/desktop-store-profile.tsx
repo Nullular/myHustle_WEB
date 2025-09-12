@@ -4,7 +4,6 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
-  Share, 
   Heart, 
   Star, 
   MapPin, 
@@ -12,8 +11,14 @@ import {
   Calendar,
   ShoppingCart
 } from 'lucide-react';
+import ShareButton from '@/components/ui/ShareButton';
 import { Shop, Product, Service, User } from '@/types';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import NeuInsetBox from '@/components/ui/NeuInsetBox';
+import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
+import ItemCard from '@/components/ui/ItemCard';
+import ServiceCard from '@/components/ui/ServiceCard';
+import FavoriteButton from '@/components/ui/FavoriteButton';
 
 interface StoreProfileProps {
     router: AppRouterInstance;
@@ -72,13 +77,13 @@ export default function DesktopStoreProfileScreen({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
-      <div className="relative w-full h-80 neu-card-punched overflow-hidden rounded-none">
-        <div className="relative w-full h-52 overflow-hidden rounded-b-3xl">
+      <div className="relative w-full h-80 overflow-hidden">
+        <div className="relative w-full h-52 overflow-hidden">
           {shop.bannerUrl ? (
             <img
               src={shop.bannerUrl}
               alt={`${shop.name} banner`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-b-3xl"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -86,42 +91,29 @@ export default function DesktopStoreProfileScreen({
               }}
             />
           ) : null}
-          <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-r from-blue-500/90 to-purple-600/90 text-white text-xl font-bold ${shop.bannerUrl ? 'hidden' : ''}`}>
+          <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-r from-blue-500/90 to-purple-600/90 text-white text-xl font-bold rounded-b-3xl ${shop.bannerUrl ? 'hidden' : ''}`}>
             {shop.name}
           </div>
         </div>
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
           <button
             onClick={() => router.back()}
-            className="w-12 h-12 rounded-full neu-card-punched bg-white/90 backdrop-blur-sm flex items-center justify-center"
+            className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
             aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
           <div className="flex space-x-2">
-            <button
-              onClick={handleShare}
-              className="w-12 h-12 rounded-full neu-card-punched bg-white/90 backdrop-blur-sm flex items-center justify-center"
-              aria-label="Share"
-            >
-              <Share className="h-5 w-5 text-gray-700" />
-            </button>
-            <button
-              onClick={toggleFavorite}
-              className={`w-12 h-12 rounded-full backdrop-blur-sm flex items-center justify-center ${
-                isFavorite 
-                  ? 'neu-pressed bg-white/90' 
-                  : 'neu-card-punched bg-white/90'
-              }`}
-              aria-label="Favorite"
-            >
-              <Heart className={`h-5 w-5 ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-700'}`} />
-            </button>
+            <ShareButton onClick={handleShare} />
+            <FavoriteButton 
+              isFavorite={isFavorite}
+              toggleFavorite={() => toggleFavorite()}
+            />
           </div>
         </div>
         <div className="absolute bottom-8 left-5 right-5">
           <div className="flex items-center space-x-4">
-            <div className="w-20 h-20 neu-card-punched rounded-3xl p-2 bg-white">
+            <div className="w-20 h-20 rounded-3xl p-2 bg-white">
               {shop.logoUrl && !shop.logoUrl.startsWith('content://') ? (
                 <img
                   src={shop.logoUrl}
@@ -170,111 +162,33 @@ export default function DesktopStoreProfileScreen({
             ))}
           </div>
         </div>
-        <div className="neu-card-punched rounded-3xl p-5 bg-white">
+        <NeuDescriptionBox>
           <h2 className="text-xl font-bold mb-2 text-gray-900">About</h2>
           <p className="text-gray-700 leading-6">{shop.description}</p>
-        </div>
+        </NeuDescriptionBox>
         {products.length > 0 && (
-          <div className="neu-pressed rounded-3xl p-6 bg-white">
+          <NeuInsetBox>
             <h2 className="text-xl font-bold mb-4 text-gray-900">Products</h2>
-            <div className="flex space-x-4 overflow-x-auto pb-2 px-4 -mx-4 android-scroll-container">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {products.map((item) => (
-                <Link
-                  key={`product-${item.id}`}
-                  href={`/item/${item.id}`}
-                  className="flex-shrink-0"
-                >
-                  <div className="w-50 h-full simple-neu-card">
-                    <div className="p-4 h-full flex flex-col">
-                      <div className="w-full h-30 mb-3 rounded-2xl overflow-hidden">
-                        {getProductImageUrl(item) ? (
-                          <img
-                            src={getProductImageUrl(item)!}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-full h-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white font-bold text-lg ${getProductImageUrl(item) ? 'hidden' : ''}`}>
-                          {item.name.charAt(0)}
-                        </div>
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <h3 className="font-bold text-base text-gray-900">{item.name}</h3>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {item.rating?.toFixed(1) || '0.0'}
-                          </span>
-                        </div>
-                        {item.description && (
-                          <p className="text-gray-600 text-sm leading-tight line-clamp-3">
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                <Link href={`/item/${item.id}`} key={`product-${item.id}`}>
+                  <ItemCard item={item} imageUrl={getProductImageUrl(item)} />
                 </Link>
               ))}
             </div>
-          </div>
+          </NeuInsetBox>
         )}
         {services.length > 0 && (
-          <div className="neu-pressed rounded-3xl p-6 bg-white">
+          <NeuInsetBox>
             <h2 className="text-xl font-bold mb-4 text-gray-900">Services</h2>
-            <div className="flex space-x-4 overflow-x-auto pb-2 px-4 -mx-4 android-scroll-container">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {services.map((item) => (
-                <Link
-                  key={`service-${item.id}`}
-                  href={`/service/${item.id}`}
-                  className="flex-shrink-0"
-                >
-                  <div className="w-50 h-full simple-neu-card">
-                    <div className="p-4 h-full flex flex-col">
-                      <div className="w-full h-30 mb-3 rounded-2xl overflow-hidden">
-                        {getServiceImageUrl(item) ? (
-                          <img
-                            src={getServiceImageUrl(item)!}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-bold text-lg ${getServiceImageUrl(item) ? 'hidden' : ''}`}>
-                          {item.name.charAt(0)}
-                        </div>
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <h3 className="font-bold text-base text-gray-900">{item.name}</h3>
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {item.rating?.toFixed(1) || '0.0'}
-                          </span>
-                        </div>
-                        {item.description && (
-                          <p className="text-gray-600 text-sm leading-tight line-clamp-3">
-                            {item.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                <Link href={`/service/${item.id}`} key={`service-${item.id}`}>
+                  <ServiceCard service={item} imageUrl={getServiceImageUrl(item)} />
                 </Link>
               ))}
             </div>
-          </div>
+          </NeuInsetBox>
         )}
         <div className="neu-card-punched rounded-3xl p-5 bg-white">
           <h2 className="text-xl font-bold mb-3 text-gray-900">Contact Details</h2>

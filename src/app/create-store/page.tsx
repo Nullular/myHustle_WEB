@@ -20,6 +20,7 @@ import { NeuButton, NeuCard, ImageUpload } from '@/components/ui';
 import { useAuthStore } from '@/lib/store/auth';
 import { shopRepository } from '@/lib/firebase/repositories';
 import { Shop } from '@/types/models';
+import CreateButton from '@/components/ui/CreateButton';
 
 export default function CreateStorePage() {
   const router = useRouter();
@@ -586,23 +587,11 @@ export default function CreateStorePage() {
               Cancel
             </NeuButton>
             
-            <NeuButton
+            <CreateButton
               onClick={handleCreateStore}
               disabled={!isFormValid() || isLoading}
-              className="min-w-[150px]"
-            >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Creating...</span>
-                </div>
-              ) : (
-                <>
-                  <Store className="mr-2" size={16} />
-                  Create Store
-                </>
-              )}
-            </NeuButton>
+              text={isLoading ? 'Creating...' : 'Create Store'}
+            />
           </div>
         </div>
       </div>

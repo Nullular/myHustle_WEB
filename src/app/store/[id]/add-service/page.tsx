@@ -19,6 +19,7 @@ import SimpleCropUpload from '@/components/ui/SimpleCropUploadWrapper';
 import { useAuthStore } from '@/lib/store/auth';
 import { serviceRepository } from '@/lib/firebase/repositories';
 import { Service } from '@/types/models';
+import CreateButton from '@/components/ui/CreateButton';
 
 interface AddServicePageProps {
   params: Promise<{ id: string }>;
@@ -355,13 +356,11 @@ export default function AddServicePage({ params }: AddServicePageProps) {
               Discard
             </NeuButton>
             
-            <NeuButton
+            <CreateButton
               onClick={handleSaveService}
-              className="flex-1"
               disabled={!isFormValid() || isLoading}
-            >
-              {isLoading ? 'Saving...' : 'Save Service'}
-            </NeuButton>
+              text={isLoading ? 'Saving...' : 'Save Service'}
+            />
           </div>
 
           {/* Bottom Spacing */}

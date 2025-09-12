@@ -133,7 +133,36 @@ export default function BookingScreen({
     name: shopName,
     openTime24: "09:00", // This should be loaded from Firebase
     closeTime24: "18:00", // This should be loaded from Firebase
-    ownerId: shopOwnerId
+    ownerId: shopOwnerId,
+    description: '',
+    category: '',
+    location: '',
+    address: '',
+    phone: '',
+    email: '',
+    website: '',
+    imageUrl: '',
+    coverImageUrl: '',
+    logoUrl: '',
+    bannerUrl: '',
+    rating: 0,
+    totalReviews: 0,
+    isVerified: false,
+    isPremium: false,
+    active: true,
+    availability: '',
+    responseTime: '',
+    operatingHours: {},
+    socialMedia: {},
+    tags: [],
+    specialties: [],
+    priceRange: '',
+    deliveryOptions: [],
+    paymentMethods: [],
+    catalog: [],
+    created_at: new Date(),
+    updated_at: new Date(),
+    isFavorite: false
   });
 
   // Load confirmed bookings on mount (matches Android lifecycle)

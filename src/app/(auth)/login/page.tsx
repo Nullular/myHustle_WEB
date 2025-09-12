@@ -8,7 +8,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import { NeuButton, NeuInput, NeuCard } from '@/components/ui';
+import { NeuButton, NeuInput } from '@/components/ui';
+import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
 import { AuthService } from '@/lib/firebase/auth';
 import { useAuthStore } from '@/lib/store/auth';
 import { LoginForm, UserType } from '@/types';
@@ -130,7 +131,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Form Card */}
-        <NeuCard className="p-6">
+        <NeuDescriptionBox>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Error Message */}
             {error && (
@@ -247,7 +248,7 @@ export default function LoginPage() {
               </p>
             </div>
           </form>
-        </NeuCard>
+        </NeuDescriptionBox>
       </div>
     </div>
   );

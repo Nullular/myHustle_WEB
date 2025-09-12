@@ -414,7 +414,10 @@ export interface CartItem {
   quantity: number;
   imageUrl: string;
   shopId: string;
-  storeName: string;
+  shopName: string; // Changed from storeName
+  sku?: string;
+  variantId?: string;
+  variantName?: string;
 }
 
 export interface Cart {

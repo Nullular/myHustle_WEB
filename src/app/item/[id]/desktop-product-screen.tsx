@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ArrowLeft, 
-  Share, 
   Heart, 
   Star, 
   ShoppingCart,
@@ -13,6 +12,7 @@ import {
   Minus,
   Check
 } from 'lucide-react';
+import ShareButton from '@/components/ui/ShareButton';
 
 import { NeuButton, NeuCard } from '@/components/ui';
 import { Product, User } from '@/types/models';
@@ -80,12 +80,7 @@ export function DesktopProductScreen({
             Product Details
           </h1>
 
-          <NeuButton
-            onClick={handleShare}
-            className="p-3"
-          >
-            <Share className="h-5 w-5" />
-          </NeuButton>
+          <ShareButton onClick={handleShare} />
         </div>
       </div>
 
@@ -152,21 +147,15 @@ export function DesktopProductScreen({
         <NeuCard className="p-6 mb-6">
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">{product.name}</h1>
-              <p className="text-gray-600">{product.category}</p>
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">{product.name}</h1>
+              <p className="text-lg text-gray-600 mb-4">{product.category}</p>
+              <p className="text-3xl font-bold text-gray-900">R{currentPrice.toFixed(2)}</p>
             </div>
             
             <div className="flex items-center space-x-1 ml-4">
               <Star className="h-5 w-5 text-yellow-400 fill-current" />
               <span className="font-medium">{product.rating.toFixed(1)}</span>
             </div>
-          </div>
-
-          {/* Price */}
-          <div className="mb-6">
-            <span className="text-3xl font-bold text-blue-600">
-              R{currentPrice.toFixed(2)}
-            </span>
           </div>
 
           {/* Size Selector */}

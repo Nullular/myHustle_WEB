@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'ne          <ShareButton onClick={handleShare} />igation';
 import { 
   ArrowLeft, 
-  Share, 
   Heart, 
   Star, 
   Calendar,
@@ -15,6 +14,7 @@ import {
   DollarSign,
   Clock
 } from 'lucide-react';
+import ShareButton from '@/components/ui/ShareButton';
 
 import { NeuButton, NeuCard } from '@/components/ui';
 import { Service, User } from '@/types/models';
@@ -72,12 +72,7 @@ export function DesktopServiceScreen({
             Service Details
           </h1>
 
-          <NeuButton
-            onClick={handleShare}
-            className="p-3"
-          >
-            <Share className="h-5 w-5" />
-          </NeuButton>
+          <ShareButton onClick={handleShare} />
         </div>
       </div>
 

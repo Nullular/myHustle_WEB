@@ -211,6 +211,27 @@ export class OrderRepository {
       throw error;
     }
   }
+
+  async createOrder(orderData: Omit<Order, 'id' | 'orderNumber'>): Promise<string> {
+    try {
+      const newOrderRef = doc(this.ordersCollection);
+      const orderNumber = `MH-${Date.now()}`;
+      
+      const finalOrderData = {
+        ...orderData,
+        id: newOrderRef.id,
+        orderNumber,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+
+      await updateDoc(newOrderRef, finalOrderData);
+      return newOrderRef.id;
+    } catch (error) {
+      console.error('❌ Error creating order:', error);
+      throw error;
+    }
+  }
   
   private cleanup(type?: 'customer' | 'shopOwner') {
     if (!type || type === 'customer') {

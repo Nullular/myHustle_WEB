@@ -134,7 +134,7 @@ export default function ProductPage({ params }: ProductPageProps) {
         quantity: quantity,
         imageUrl: getProductImageUrl(product) || undefined,
         shopId: product.shopId,
-        storeName: 'Store' // TODO: Get shop name from shop repository
+        shopName: 'Store' // TODO: Get shop name from shop repository
       };
 
       addItem(cartItem);

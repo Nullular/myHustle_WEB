@@ -10,6 +10,7 @@ import DesktopStoreProfileScreen from './desktop-store-profile';
 import MobileStoreProfileScreen from './mobile-store-profile';
 import { NeuButton } from '@/components/ui';
 import { Product, Service } from '@/types';
+import Loader from '@/components/ui/Loader';
 
 interface StoreProfilePageProps {
   params: Promise<{ id: string }>;
@@ -98,10 +99,7 @@ export default function StoreProfilePage({ params }: StoreProfilePageProps) {
   if (!storeId || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading shop...</p>
-        </div>
+        <Loader />
       </div>
     );
   }

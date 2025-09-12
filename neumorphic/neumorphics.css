@@ -1,0 +1,18 @@
+/* Styles for animated button characters */
+.char.state-1 span:nth-child(1) { --i: 1; }
+.char.state-1 span:nth-child(2) { --i: 2; }
+.char.state-1 span:nth-child(3) { --i: 3; }
+.char.state-1 span:nth-child(4) { --i: 4; }
+.char.state-1 span:nth-child(5) { --i: 5; }
+.char.state-1 span:nth-child(6) { --i: 6; }
+.char.state-1 span:nth-child(7) { --i: 7; }
+.char.state-1 span:nth-child(8) { --i: 8; }
+.char.state-1 span:nth-child(9) { --i: 9; }
+
+.char.state-2 span:nth-child(1) { --i: 1; }
+.char.state-2 span:nth-child(2) { --i: 2; }
+.char.state-2 span:nth-child(3) { --i: 3; }
+.char.state-2 span:nth-child(4) { --i: 4; }
+.char.state-2 span:nth-child(5) { --i: 5; }
+.char.state-2 span:nth-child(6) { --i: 6; }
+.char.state-2 span:nth-child(7) { --i: 7; }

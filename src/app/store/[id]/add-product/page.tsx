@@ -293,6 +293,7 @@ export default function AddProductPage({ params }: AddProductPageProps) {
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
+                    aria-label="Product category"
                   >
                     {categories.map(category => (
                       <option key={category} value={category}>
@@ -491,6 +492,7 @@ function ProductVariantsSection({
               <button
                 onClick={() => onRemoveVariant(index)}
                 className="text-red-500 hover:text-red-700 p-1"
+                aria-label={`Remove variant ${index + 1}`}
               >
                 <X size={16} />
               </button>
@@ -544,6 +546,7 @@ function SizeVariantsSection({
               <button
                 onClick={() => onRemoveSizeVariant(index)}
                 className="text-red-500 hover:text-red-700 p-1"
+                aria-label={`Remove size variant ${index + 1}`}
               >
                 <X size={16} />
               </button>

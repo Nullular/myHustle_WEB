@@ -45,6 +45,7 @@ export interface Booking {
   requestedTime: string;
   status: BookingStatus;
   notes: string;
+  responseMessage?: string;
   createdAt: number;
   updatedAt: number;
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Upload, X, Crop } from 'lucide-react';
 import ReactCrop, { Crop as CropType, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -30,22 +31,38 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [crop, setCrop] = useState<CropType>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [zoom, setZoom] = useState(1);
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cropContainerRef = useRef<HTMLDivElement>(null);
 
-  const aspectRatio = 1; // Always square crop regardless of usage type
+  // Fixed aspect ratio for square crops, keep resizable but not reshapeable
+  const aspectRatio = 1;
+
+  // Create dynamic zoom style
+  const zoomStyle = useMemo(() => ({
+    transform: `scale(${zoom})`
+  }), [zoom]);
+
+  // Memoized initial crop settings to prevent re-renders
+  const initialCrop = useMemo((): CropType => ({
+    unit: '%',
+    width: 60,
+    height: 60,
+    x: 20,
+    y: 20,
+  }), []);
 
   const onSelectFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
-      // Process files sequentially to avoid crop modal conflicts
       processNextFile(files, 0);
     }
   }, []);
 
-  const processNextFile = (files: File[], index: number) => {
+  const processNextFile = useCallback((files: File[], index: number) => {
     if (index >= files.length) {
-      return; // All files processed
+      return;
     }
 
     const file = files[index];
@@ -54,31 +71,68 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       const imageUrl = reader.result?.toString() || '';
       setImageToCrop(imageUrl);
       setCurrentImageIndex(index);
-      // Initialize crop with fixed square dimensions
-      const newCrop: CropType = {
-        unit: '%',
-        width: 60,  // Fixed width
-        height: 60, // Fixed height (square)
-        x: 20,      // Centered horizontally  
-        y: 20,      // Centered vertically
-      };
-      setCrop(newCrop);
+      setCrop(initialCrop);
     });
     reader.readAsDataURL(file);
-  };
+  }, [initialCrop]);
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    // Set fixed square crop on image load
-    const newCrop: CropType = {
-      unit: '%',
-      width: 60,  // Fixed width
-      height: 60, // Fixed height (square) 
-      x: 20,      // Centered horizontally
-      y: 20,      // Centered vertically
-    };
-    
-    setCrop(newCrop);
+    setCrop(initialCrop);
+    setZoom(1); // Reset zoom when new image loads
+  }, [initialCrop]);
+
+  // Zoom handlers
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    setZoom(prevZoom => Math.max(0.5, Math.min(3, prevZoom + delta)));
   }, []);
+
+  // Add wheel event listener with passive: false to allow preventDefault
+  useEffect(() => {
+    const container = cropContainerRef.current;
+    if (container && imageToCrop) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      return () => {
+        container.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, [handleWheel, imageToCrop]);
+
+  const handleTouchStart = useRef<{ touches: React.TouchList | null; zoom: number }>({ touches: null, zoom: 1 });
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && handleTouchStart.current.touches) {
+      e.preventDefault();
+      
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const currentDistance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + 
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+
+      const initialTouch1 = handleTouchStart.current.touches[0];
+      const initialTouch2 = handleTouchStart.current.touches[1];
+      const initialDistance = Math.sqrt(
+        Math.pow(initialTouch2.clientX - initialTouch1.clientX, 2) + 
+        Math.pow(initialTouch2.clientY - initialTouch1.clientY, 2)
+      );
+
+      const scale = currentDistance / initialDistance;
+      const newZoom = handleTouchStart.current.zoom * scale;
+      setZoom(Math.max(0.5, Math.min(3, newZoom)));
+    }
+  }, []);
+
+  const handleTouchStartCapture = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      handleTouchStart.current = {
+        touches: e.touches,
+        zoom: zoom
+      };
+    }
+  }, [zoom]);
 
   const onCropComplete = useCallback((crop: PixelCrop) => {
     setCompletedCrop(crop);
@@ -96,18 +150,38 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       throw new Error('No 2d context');
     }
 
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
+    // The image is scaled by zoom, so we need to adjust our calculations
+    // The displayed image dimensions
+    const displayedWidth = image.width * zoom;
+    const displayedHeight = image.height * zoom;
+    
+    // Scale from displayed coordinates to natural image coordinates
+    const scaleX = image.naturalWidth / displayedWidth;
+    const scaleY = image.naturalHeight / displayedHeight;
 
+    // Calculate offset for centering (since zoom transforms from center)
+    const offsetX = (displayedWidth - image.width) / 2;
+    const offsetY = (displayedHeight - image.height) / 2;
+
+    // Adjust crop coordinates to account for zoom and centering
+    const adjustedCrop = {
+      x: (crop.x + offsetX) * scaleX,
+      y: (crop.y + offsetY) * scaleY,
+      width: crop.width * scaleX,
+      height: crop.height * scaleY
+    };
+
+    // Set canvas to desired output size
     canvas.width = crop.width;
     canvas.height = crop.height;
 
+    // Draw the cropped portion
     ctx.drawImage(
       image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
+      adjustedCrop.x,
+      adjustedCrop.y,
+      adjustedCrop.width,
+      adjustedCrop.height,
       0,
       0,
       crop.width,
@@ -127,75 +201,90 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
         0.9
       );
     });
-  }, []);
+  }, [zoom]);
 
   const handleCropConfirm = useCallback(async () => {
-    if (!completedCrop || !imgRef.current || !imageToCrop) {
+    if (!crop || !imgRef.current || !imageToCrop) {
+      console.warn('⚠️ Missing required data for crop confirm');
       return;
     }
 
     try {
       setIsUploading(true);
+      console.log('🔄 Starting crop and upload process...');
+      
+      // Convert percentage crop to pixel crop for processing
+      const image = imgRef.current;
+      const pixelCrop = {
+        x: (crop.x / 100) * image.naturalWidth,
+        y: (crop.y / 100) * image.naturalHeight,
+        width: (crop.width / 100) * image.naturalWidth,
+        height: (crop.height / 100) * image.naturalHeight,
+        unit: 'px' as const
+      };
       
       const croppedFile = await getCroppedImg(
         imgRef.current,
-        completedCrop,
+        pixelCrop,
         `cropped-image-${Date.now()}.jpg`
       );
 
       // For single image uploads (like logos), delete existing images first
       if (maxImages === 1 && images.length > 0) {
         console.log('🔄 Replacing existing image...');
-        // Delete old image from storage
         for (const oldImageUrl of images) {
           try {
             await imageUploadService.deleteImage(oldImageUrl);
             console.log('🗑️ Old image deleted successfully');
           } catch (deleteError: any) {
             if (deleteError?.code === 'storage/object-not-found') {
-              console.warn('⚠️ Old image was already deleted or path not found');
+              console.warn('ℹ️ Image already deleted or does not exist, continuing...');
             } else {
-              console.warn('⚠️ Could not delete old image from storage:', deleteError.message);
+              console.warn('⚠️ Could not delete old image:', deleteError.message);
             }
           }
         }
       }
 
-      // Upload to Firebase Storage with proper path
+      // Upload to Firebase Storage
       const finalUploadPath = uploadPath || (cropType === 'square' ? 'products/images' : 'shops/banners');
+      console.log('📤 Uploading to path:', finalUploadPath);
+      
       const downloadURL = await imageUploadService.uploadImage(croppedFile, finalUploadPath);
+      console.log('✅ Upload successful, URL:', downloadURL);
 
-      // For single image (logo), replace entirely. For multiple images, add to array
+      // Update images array
       const newImages = maxImages === 1 ? [downloadURL] : [...images, downloadURL];
       if (newImages.length <= maxImages) {
         onImagesChange(newImages);
+        console.log('✅ Images state updated successfully');
       }
 
-      // Reset state
-      setImageToCrop(null);
-      setCurrentImageIndex(null);
-      setCrop(undefined);
-      setCompletedCrop(undefined);
+      // Reset crop modal state
+      handleCropCancel();
       
-      console.log('✅ Image uploaded successfully');
     } catch (error) {
       console.error('❌ Error uploading image:', error);
       alert('Failed to upload image. Please try again.');
     } finally {
       setIsUploading(false);
     }
-  }, [completedCrop, imageToCrop, images, onImagesChange, maxImages, cropType, getCroppedImg]);
+  }, [crop, imageToCrop, images, onImagesChange, maxImages, cropType, uploadPath, getCroppedImg]);
 
-  const handleCropCancel = () => {
-    if (imageToCrop) {
-      // Clean up the object URL to prevent memory leaks
-      URL.revokeObjectURL(imageToCrop);
+  const handleCropCancel = useCallback(() => {
+    if (imageToCrop && imageToCrop.startsWith('data:')) {
+      // Only revoke if it's a blob URL
+      try {
+        URL.revokeObjectURL(imageToCrop);
+      } catch (e) {
+        // Ignore errors for data URLs
+      }
     }
     setImageToCrop(null);
     setCurrentImageIndex(null);
     setCrop(undefined);
     setCompletedCrop(undefined);
-  };
+  }, [imageToCrop]);
 
   const removeImage = async (index: number) => {
     try {
@@ -311,50 +400,78 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
         </div>
       )}
 
-      {/* Crop Modal */}
-      {imageToCrop && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-auto">
+      {/* Crop Modal - USING PORTAL TO PREVENT ELEVATION CONFLICTS */}
+      {imageToCrop && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center crop-modal-overlay p-4">
+          <div className="bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-auto shadow-2xl">
             <h3 className="text-lg font-semibold mb-4">
               Crop {cropType === 'square' ? 'Square' : 'Banner'} Image
             </h3>
             
-            <div className="mb-4">
-              <ReactCrop
-                crop={crop}
-                onChange={(_, percentCrop) => setCrop(percentCrop)}
-                onComplete={(c) => setCompletedCrop(c)}
-                aspect={1}  // Force square aspect ratio
-                minWidth={150}  // Minimum crop size
-                minHeight={150} // Minimum crop size
-                maxWidth={300}  // Maximum crop size  
-                maxHeight={300} // Maximum crop size
-                keepSelection={true}  // Keep selection visible
-                disabled={false}  // Allow repositioning but maintain square shape
+            <div className="mb-4 relative">
+              <div 
+                ref={cropContainerRef}
+                className="overflow-hidden rounded-lg bg-gray-100 crop-container"
+                onTouchStart={handleTouchStartCapture}
+                onTouchMove={handleTouchMove}
               >
-                <img
-                  ref={imgRef}
-                  alt="Crop preview"
-                  src={imageToCrop}
-                  className="max-h-96 max-w-full"
-                  onLoad={onImageLoad}
-                />
-              </ReactCrop>
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  aspect={aspectRatio}
+                  minWidth={100}
+                  minHeight={100}
+                  keepSelection={true}
+                  disabled={isUploading}
+                  ruleOfThirds={true}
+                >
+                  <img
+                    ref={imgRef}
+                    alt="Crop preview"
+                    src={imageToCrop}
+                    className="crop-preview-image crop-zoom-scale"
+                    onLoad={onImageLoad}
+                    {...({ style: zoomStyle } as any)}
+                  />
+                </ReactCrop>
+              </div>
+              
+              {/* Zoom Indicator */}
+              <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                Zoom: {Math.round(zoom * 100)}%
+              </div>
+              
+              {/* Zoom Instructions */}
+              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
+                Mouse wheel or pinch to zoom
+              </div>
+              
+              {/* Loading Overlay */}
+              {isUploading && (
+                <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-gray-600">Processing...</p>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-3 border-t pt-4">
               <button
                 type="button"
                 onClick={handleCropCancel}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                disabled={isUploading}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleCropConfirm}
-                disabled={!completedCrop || isUploading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+                disabled={!crop || isUploading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 {isUploading ? (
                   <>
@@ -364,13 +481,14 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
                 ) : (
                   <>
                     <Crop className="w-4 h-4" />
-                    <span>Crop & Upload</span>
+                    <span>Save Cropped Image</span>
                   </>
                 )}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Hidden File Input */}

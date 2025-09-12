@@ -325,6 +325,7 @@ export default function BookingScreen({
           <button
             onClick={onBack}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Back"
           >
             <ChevronLeft className="w-6 h-6 text-gray-600" />
           </button>

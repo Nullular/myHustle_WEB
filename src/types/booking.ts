@@ -16,7 +16,7 @@ export interface CalendarDay {
   isInRange: boolean;
 }
 
-export interface Service {
+export interface BookingService {
   id: string;
   name: string;
   allowsMultiDayBooking?: boolean;
@@ -49,12 +49,16 @@ export interface Booking {
   updatedAt: number;
 }
 
+import { Service } from '@/types/models';
+
 export interface BookingScreenProps {
   shopId: string;
   serviceId: string;
   serviceName: string;
   shopName: string;
   shopOwnerId: string;
+  shopOpenTime: string;
+  shopCloseTime: string;
   service?: Service;
   onBack: () => void;
   onSave: (timestamp: number) => void;

@@ -6,7 +6,8 @@ import {
   getDocs, 
   onSnapshot,
   doc,
-  updateDoc
+  updateDoc,
+  addDoc
 } from 'firebase/firestore';
 import { db } from '../config';
 import { Booking, BookingStatus, BookingAnalytics } from '@/types';
@@ -323,6 +324,27 @@ class BookingRepository {
     } catch (error) {
       console.error('❌ Error updating booking status:', error);
       console.error('❌ Error details:', error instanceof Error ? error.message : String(error));
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new booking
+   */
+  async createBooking(booking: Omit<Booking, 'id'>): Promise<string> {
+    try {
+      console.log('📝 Creating new booking:', booking);
+      
+      const docRef = await addDoc(this.collectionRef, {
+        ...booking,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+      
+      console.log('✅ Booking created successfully with ID:', docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error('❌ Error creating booking:', error);
       throw error;
     }
   }

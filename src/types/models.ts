@@ -106,6 +106,7 @@ export interface Service {
   category: string;
   estimatedDuration: number; // minutes
   isBookable: boolean;
+  allowsMultiDayBooking?: boolean; // Added for booking compatibility
   expensePerUnit: number;
   rating: number;
   totalReviews: number;

@@ -12,10 +12,11 @@ import {
   MapPin,
   Loader2
 } from 'lucide-react';
-import { Booking, BookingStatus, Service } from '@/types';
+import { Service } from '@/types/models';
+import { Booking, BookingStatus } from '@/types';
 import { CalendarDay, TimeSlot, BookingScreenProps } from '@/types/booking';
-import { bookingRepository } from '@/lib/firebase/repositories/bookingRepository';
-import { useAuthStateSync } from '@/hooks/useAuthStateSync';
+import { bookingRepository } from '@/lib/firebase/repositories';
+import { useAuthStore } from '@/lib/store/auth';
 import {
   CalendarHeader,
   DaysOfWeekHeader,
@@ -115,26 +116,63 @@ const updateDaysWithSelection = (
   });
 };
 
-// Sample time slots - in real app this would come from Firebase
-const generateTimeSlots = (): TimeSlot[] => {
+// Generate time slots using Android logic (shop hours + service duration + real booking data)
+const generateTimeSlots = (
+  selectedDate: Date | null,
+  confirmedBookings: Booking[],
+  shopOpenTime?: string, 
+  shopCloseTime?: string, 
+  estimatedDuration?: number
+): TimeSlot[] => {
+  if (!selectedDate) return [];
+  
   const slots: TimeSlot[] = [];
-  for (let hour = 9; hour <= 17; hour++) {
-    for (let minute = 0; minute < 60; minute += 30) {
-      const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-      const time12 = new Date(`2000-01-01T${time24}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      });
-      
-      slots.push({
-        time: time12,
-        time24,
-        isAvailable: Math.random() > 0.3, // Random availability for demo
-        price: Math.random() > 0.5 ? `$${(50 + Math.random() * 100).toFixed(0)}` : undefined
-      });
-    }
+  
+  // Get booked times for this specific date (Android logic)
+  const dateString = selectedDate.toISOString().split('T')[0]; // "yyyy-MM-dd" format
+  const bookedTimes = confirmedBookings
+    .filter(booking => booking.requestedDate === dateString)
+    .map(booking => booking.requestedTime)
+    .filter(Boolean);
+  const bookedTimesSet = new Set(bookedTimes);
+  
+  // Use Android fallback logic: shop hours or 09:00-18:00
+  const open = shopOpenTime || "09:00";
+  const close = shopCloseTime || "18:00";
+  
+  const [openH, openM] = open.split(":").map(val => parseInt(val) || 0);
+  const [closeH, closeM] = close.split(":").map(val => parseInt(val) || 0);
+  
+  const openMin = openH * 60 + openM;
+  const closeMin = closeH === 24 && closeM === 0 ? 24 * 60 : closeH * 60 + closeM;
+
+  // Use service duration or fallback to 60 minutes (Android logic)
+  const durationMin = Math.max(estimatedDuration || 60, 5);
+
+  let t = openMin;
+  while (t + durationMin <= closeMin) {
+    const h = Math.floor(t / 60);
+    const m = t % 60;
+    const time24 = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    const time12 = new Date(`2000-01-01T${time24}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    // Check real availability against booked times
+    const isAvailable = !bookedTimesSet.has(time24);
+    
+    slots.push({
+      time: time12,
+      time24,
+      isAvailable, // Now using real booking data!
+      price: undefined // Price will be displayed separately from service basePrice
+    });
+    
+    t += durationMin;
   }
+  
   return slots;
 };
 
@@ -144,11 +182,16 @@ export default function BookingScreen({
   serviceName,
   shopName,
   shopOwnerId,
+  shopOpenTime,
+  shopCloseTime,
   service,
   onBack,
   onSave,
   onLoginClick
 }: BookingScreenProps) {
+  // Auth state
+  const { user } = useAuthStore();
+  
   // State management
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
@@ -159,17 +202,43 @@ export default function BookingScreen({
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [isCreatingBooking, setIsCreatingBooking] = useState(false);
-  const [availableTimeSlots] = useState<TimeSlot[]>(generateTimeSlots());
+  // Generate time slots dynamically based on selected date and confirmed bookings (Android logic)
+  const availableTimeSlots = useMemo(() => {
+    return generateTimeSlots(
+      selectedStartDate,
+      confirmedBookings,
+      shopOpenTime,
+      shopCloseTime,
+      (service as any)?.estimatedDuration || 120 // Using estimatedDuration to match models.ts
+    );
+  }, [selectedStartDate, confirmedBookings, shopOpenTime, shopCloseTime, service]);
 
-  // Computed values
+  // Computed values (EXACT same logic as store owner calendar)
   const calendarDays = useMemo(() => {
-    const blockedDates = confirmedBookings
-      .filter(booking => booking.status === BookingStatus.ACCEPTED)
-      .map(booking => new Date(booking.requestedDate));
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    
+    // Generate blocked dates using EXACT same logic as store owner calendar
+    const blockedDates: Date[] = [];
+    
+    for (let day = 1; day <= new Date(year, month + 1, 0).getDate(); day++) {
+      const date = new Date(year, month, day);
+      const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format (EXACT same as store calendar)
+      
+      // Find bookings for this date (EXACT same filtering logic)
+      const dayBookings = confirmedBookings.filter(booking => booking.requestedDate === dateStr);
+      
+      // Check if any booking is ACCEPTED (blocking the date)
+      const hasAcceptedBooking = dayBookings.some(booking => booking.status === BookingStatus.ACCEPTED);
+      
+      if (hasAcceptedBooking) {
+        blockedDates.push(date);
+      }
+    }
     
     const days = generateCalendarDays(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth(),
+      year,
+      month,
       blockedDates
     );
     
@@ -185,16 +254,16 @@ export default function BookingScreen({
   const isDateSelectionValid = useMemo(() => {
     if (!selectedStartDate || !selectedEndDate) return false;
     
-    // Check if any day in the selected range is blocked
+    // Check if any day in the selected range is blocked (EXACT same logic as store calendar)
     const start = new Date(selectedStartDate);
     const end = new Date(selectedEndDate);
     
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const isBlocked = confirmedBookings.some(booking => 
-        booking.status === BookingStatus.ACCEPTED && 
-        new Date(booking.requestedDate).toDateString() === d.toDateString()
+      const dateStr = d.toISOString().split('T')[0]; // EXACT same format as store calendar
+      const hasAcceptedBooking = confirmedBookings.some(booking => 
+        booking.requestedDate === dateStr && booking.status === BookingStatus.ACCEPTED
       );
-      if (isBlocked) return false;
+      if (hasAcceptedBooking) return false;
     }
     
     return true;
@@ -212,25 +281,34 @@ export default function BookingScreen({
     return true;
   }, [selectedStartDate, selectedEndDate, isDateSelectionValid, isSingleDayBooking, selectedTimeSlot]);
 
-  // Load bookings on mount
+  // Load confirmed bookings on mount (EXACT same logic as store owner calendar)
   useEffect(() => {
-    const loadBookings = async () => {
-      if (!shopId) return;
-      
+    async function loadBookings() {
       setIsLoadingBookings(true);
+      setBookingError(null);
+      
       try {
-        // TODO: Replace with actual Firebase call
-        // const shopBookings = await bookingRepository.getBookingsForShop(shopId);
-        // setConfirmedBookings(shopBookings.filter(booking => booking.status === BookingStatus.ACCEPTED));
+        console.log('🔍 Loading bookings for shop (customer view):', shopId);
         
-        // Mock data for now
-        setConfirmedBookings([]);
-      } catch (error) {
-        setBookingError(`Failed to load booking availability: ${error}`);
+        // Get all bookings for specific shop (EXACT same as store owner calendar)
+        const shopBookings = await bookingRepository.getBookingsForShop(shopId);
+        
+        console.log('📋 Found bookings (customer view):', shopBookings.length);
+        console.log('🔍 Bookings details:', shopBookings.map(b => ({
+          id: b.id,
+          date: b.requestedDate,
+          time: b.requestedTime,
+          status: b.status,
+          serviceId: b.serviceId
+        })));
+        setConfirmedBookings(shopBookings);
+      } catch (error: any) {
+        console.error('❌ Error loading bookings:', error);
+        setBookingError(error.message || 'Failed to load booking availability');
       } finally {
         setIsLoadingBookings(false);
       }
-    };
+    }
 
     loadBookings();
   }, [shopId]);
@@ -283,39 +361,82 @@ export default function BookingScreen({
     setSelectedTimeSlot(selectedTimeSlot === timeSlot ? null : timeSlot);
   };
 
-  // Booking creation handler
+  // Booking creation handler (matches Android NewBookingScreen logic exactly)
   const handleCreateBooking = async () => {
-    if (!selectedStartDate || !selectedEndDate) return;
+    if (!selectedStartDate || !selectedTimeSlot) {
+      setBookingError("Please select a date and time slot");
+      return;
+    }
     
     setIsCreatingBooking(true);
+    setBookingError(null);
+    
     try {
+      // Check if user is authenticated (matches Android logic)
+      if (!user) {
+        if (onLoginClick) {
+          onLoginClick();
+        } else {
+          setBookingError("Please log in to make a booking");
+        }
+        return;
+      }
+
+      // Create booking object (exact same structure as Android)
       const booking = {
-        id: '', // Will be set by Firebase
-        customerId: 'current-user-id', // TODO: Get from auth context
+        customerId: user.id,
         shopId,
         serviceId,
         serviceName,
         shopName,
         shopOwnerId,
-        customerName: 'Current User', // TODO: Get from auth context
-        customerEmail: 'user@example.com', // TODO: Get from auth context
-        requestedDate: selectedStartDate.toISOString().split('T')[0],
-        requestedTime: selectedTimeSlot?.time24 || '09:00',
+        customerName: user.displayName || user.email || "Unknown Customer",
+        customerEmail: user.email || "",
+        requestedDate: selectedStartDate.toISOString().split('T')[0], // YYYY-MM-DD format
+        requestedTime: selectedTimeSlot.time,
         status: BookingStatus.PENDING,
         notes: '',
-        responseMessage: '',
+        responseMessage: '', // Required field for models.ts Booking interface
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
       
-      // TODO: Replace with actual Firebase call
-      // const result = await bookingRepository.createBooking(booking);
-      console.log('Creating booking:', booking);
+      console.log('🔄 Creating booking (web):', booking);
       
+      // Create booking using Firebase (exact same method as Android)
+      const bookingId = await bookingRepository.createBooking(booking);
+      
+      console.log('✅ Booking created successfully with ID:', bookingId);
+      alert(`Booking request sent successfully! Booking ID: ${bookingId}`);
+      
+      // Reset form and close dialog
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
+      setSelectedTimeSlot(null);
       setShowConfirmationDialog(false);
-      onSave(selectedStartDate.getTime());
-    } catch (error) {
-      setBookingError(`Error creating booking: ${error}`);
+      
+      // Refresh bookings to show the new one
+      async function loadBookings() {
+        setIsLoadingBookings(true);
+        try {
+          const shopBookings = await bookingRepository.getBookingsForShop(shopId);
+          setConfirmedBookings(shopBookings);
+        } catch (error: any) {
+          console.error('❌ Error loading bookings:', error);
+        } finally {
+          setIsLoadingBookings(false);
+        }
+      }
+      await loadBookings();
+      
+      // Call onSave if provided
+      if (onSave) {
+        onSave(selectedStartDate.getTime());
+      }
+      
+    } catch (error: any) {
+      console.error('❌ Error creating booking:', error);
+      setBookingError(`Error creating booking: ${error.message || error}`);
     } finally {
       setIsCreatingBooking(false);
     }
@@ -370,6 +491,23 @@ export default function BookingScreen({
 
       {/* Content */}
       <div className="p-6 space-y-8 max-w-lg mx-auto">
+        {/* Service Info */}
+        {service && (
+          <div className="neu-card rounded-3xl p-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-2">{service.name}</h2>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Price:</span>
+              <span className="text-2xl font-bold text-purple-600">
+                ${service.basePrice} {service.currency || 'USD'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-gray-600">Duration:</span>
+              <span className="text-gray-800">{service.estimatedDuration} minutes</span>
+            </div>
+          </div>
+        )}
+        
         {/* Calendar Header */}
         <CalendarHeader
           currentMonth={currentMonth}

@@ -1,0 +1,160 @@
+Alright, let's systematically break down the data points and typical entry formats for each collection ("table" in your terms, but in Firestore, we call them collections of documents ) based on your provided Firebase Security Rules.
+Remember, these rules primarily define access control, so the fields I'll highlight are those directly referenced or implied by the permissions logic. A real document would likely contain many more fields for your application's functionality!
+Here's a detailed list:
+1. users Collection
+
+Purpose : Stores individual user profiles.
+Document ID ( {userId} ) : This is typically the Firebase Authentication User ID ( request.auth.uid ).
+Key Data Points :
+No specific fields are explicitly checked within the users document itself for read or write access beyond the document ID matching the authenticated user's uid . However, a typical user profile would include:
+name (string)
+email (string)
+profilePictureUrl (string)
+createdAt (timestamp)
+Subcollection: users/{userId}/memberships
+
+Purpose : Likely links users to specific chats or groups they are part of, perhaps storing user-specific chat settings.
+Document ID ( {chatId} ) : The ID of the chat document this membership pertains to.
+Key Data Points :
+No specific fields are checked within the memberships document by the rules directly, but they are created/updated based on the user being a participant in the parent chats collection.
+Implied fields might be: lastReadMessageTimestamp (timestamp), unreadCount (number), chatName (string, copy of chat name for quick display).
+2. shops Collection
+
+Purpose : Stores information about businesses or service providers.
+Document ID ( {shopId} ) : A unique identifier for each shop.
+Key Data Points :
+active (boolean): Determines if the shop is visible to the public ( true ) or only to admins/owners ( false ).
+ownerId (string): The Firebase Authentication User ID (UID) of the user who owns this shop. This is crucial for controlling write access.
+Implied: name (string), description (string), address (object), contactInfo (object), category (string/array), imageUrls (array of strings), etc.
+3. products Collection
+
+Purpose : Stores details about products offered by shops.
+Document ID ( {productId} ) : A unique identifier for each product.
+Key Data Points :
+active (boolean): Similar to shops , controls public visibility.
+shopId (string): The ID of the shop that offers this product. This is used by the isShopOwnerById function to determine if the requesting user owns the associated shop, thus granting write access.
+Implied: name (string), description (string), price (number), imageUrls (array of strings), stock (number), etc.
+4. services Collection
+
+Purpose : Stores details about services offered by shops.
+Document ID ( {serviceId} ) : A unique identifier for each service.
+Key Data Points :
+active (boolean): Controls public visibility.
+shopId (string): The ID of the shop that offers this service. Used similarly to products for owner-based write access.
+Implied: name (string), description (string), duration (number), price (number), imageUrls (array of strings), availability (object), etc.
+5. orders Collection
+
+Purpose : Stores information about customer orders.
+Document ID ( {orderId} ) : A unique identifier for each order.
+Key Data Points :
+customerId (string): The UID of the customer who placed the order.
+ownerId (string): If the order is directly tied to a specific shop owner's account (e.g., in a multi-vendor setup where owners have individual accounts).
+shopId (string): The ID of the shop from which the order was placed.
+shopOwnerId (string): An alternative reference to the shop owner, used to check ownership via the shops collection for access control.
+Implied: items (array of objects), totalAmount (number), status (string), createdAt (timestamp), shippingAddress (object).
+6. bookings Collection
+
+Purpose : Stores information about customer bookings (e.g., appointments).
+Document ID ( {bookingId} ) : A unique identifier for each booking.
+Key Data Points :
+customerId (string): The UID of the customer who made the booking.
+ownerId (string): If the booking is directly tied to a specific shop owner's account.
+shopId (string): The ID of the shop the booking is for.
+shopOwnerId (string): An alternative reference to the shop owner, used for access control.
+Implied from indexes: createdAt (timestamp).
+Implied: serviceId (string), bookingDate (timestamp), bookingTime (string/timestamp), status (string).
+7. chats Collection (New Standard)
+
+Purpose : Stores metadata for chat conversations.
+Document ID ( {chatId} ) : A unique identifier for each chat.
+Key Data Points :
+participants (array of strings): An array containing the UIDs of all users involved in this chat. This is critical for controlling who can read/write the chat and its messages.
+Implied: lastMessage (string), lastMessageTimestamp (timestamp), chatName (string for group chats), isGroupChat (boolean).
+Subcollection: chats/{chatId}/messages
+
+Purpose : Stores individual messages within a specific chat.
+Document ID ( {messageId} ) : A unique identifier for each message.
+Key Data Points :
+senderId (string): The UID of the user who sent the message. Used to allow senders to update their own messages.
+Implied: content (string), timestamp (timestamp), type (e.g., 'text', 'image'), readBy (array of UIDs or map).
+8. conversations Collection (Legacy)
+
+Purpose : An older structure for messaging, to be migrated away from.
+Document ID ( {conversationId} ) : Unique ID for a conversation.
+Key Data Points :
+participants (array of strings): Similar to the chats collection, defines who has access.
+Implied: Likely similar fields to chats but in an older format.
+9. messages Collection (Legacy)
+
+Purpose : An older structure for individual messages, to be migrated away from.
+Document ID ( {messageId} ) : Unique ID for a message.
+Key Data Points :
+senderId (string): UID of the sender.
+receiverId (string): UID of the receiver.
+Implied: content (string), timestamp (timestamp).
+10. booking_messages Collection (Legacy)
+
+Purpose : An older structure for messages related to bookings.
+Document ID ( {messageId} ) : Unique ID for a booking message.
+Key Data Points :
+No specific fields are checked in the rules beyond the requirement that the user is authenticated.
+Implied: bookingId (string), senderId (string), content (string), timestamp (timestamp).
+11. carts Collection
+
+Purpose : Stores the contents of a user's shopping cart.
+Document ID ( {userId} ) : The Firebase Authentication User ID (UID) of the cart owner.
+Key Data Points :
+No specific fields are checked in the rules beyond the document ID matching the authenticated user's uid .
+Implied: items (array of objects, each containing productId , quantity , price ), lastUpdated (timestamp).
+12. reviews Collection
+
+Purpose : Stores user reviews for products or services.
+Document ID ( {reviewId} ) : A unique identifier for each review.
+Key Data Points :
+visible (boolean): Controls whether the review is publicly displayed.
+customerId (string): The UID of the user who wrote the review. This is crucial for customers to create and update their own reviews.
+shopId (string): The ID of the shop the review is for. This allows shop owners to respond to reviews.
+title (string): Part of the review content that customers can update.
+content (string): Main body of the review that customers can update.
+rating (number): Star rating, updatable by customer.
+detailedRatings (object): More granular ratings, updatable by customer.
+imageUrls (array of strings): Images associated with the review, updatable by customer.
+videoUrls (array of strings): Videos associated with the review, updatable by customer.
+updatedAt (timestamp): Timestamp indicating the last update.
+ownerResponse (string): A field specifically for the shop owner's response to the review.
+13. favorites Collection
+
+Purpose : Stores a user's favorited items (e.g., shops, products, services).
+Document ID ( {favoriteId} ) : A unique identifier for each favorite entry.
+Key Data Points :
+userId (string): The UID of the user who marked the favorite.
+Implied: itemId (string), itemType (string, e.g., 'shop', 'product'), addedAt (timestamp).
+14. notifications Collection
+
+Purpose : Stores notifications for individual users.
+Document ID ( {notificationId} ) : A unique identifier for each notification.
+Key Data Points :
+userId (string): The UID of the user to whom the notification is addressed.
+Implied: message (string), type (string), read (boolean), createdAt (timestamp), targetUrl (string).
+15. analytics Collection
+
+Purpose : Stores analytics data, typically written by server-side functions.
+Document ID ( {analyticsId} ) : A unique identifier for each analytics entry.
+Key Data Points :
+entityId (string): Refers to the ID of the entity this analytics record is about (e.g., a shopId or userId ).
+scope (string): Can be "PLATFORM" for global analytics, or more specific for entity-level.
+Implied: eventType (string), value (number), timestamp (timestamp), data (object).
+16. app_config Collection
+
+Purpose : Stores global application configuration settings.
+Document ID ( {document} ) : Could be a single document (e.g., globalConfig ) or multiple documents for different configuration aspects.
+Key Data Points :
+No specific fields are checked in the rules, implying it can hold any configuration data.
+Implied: maintenanceMode (boolean), featureFlags (map), apiKeys (string - though sensitive keys shouldn't be here), welcomeMessage (string).
+17. _test Collection
+
+Purpose : A dedicated collection for development and testing.
+Document ID ( {document} ) : Any string.
+Key Data Points :
+No specific fields are checked. It's an open sandbox for authenticated users.
+This should give you a comprehensive overview of how your Firestore data is structured and what key fields drive the security of your application!

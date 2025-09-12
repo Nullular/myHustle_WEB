@@ -28,7 +28,6 @@ import {
 
 class MessagingRepository {
   private conversationsCollection = collection(db, 'chats'); // Changed from 'conversations' to 'chats'
-  private messagesCollection = collection(db, 'messages');
 
   /**
    * Get conversations for a specific user
@@ -118,6 +117,13 @@ class MessagingRepository {
   async sendMessage(messageData: SendMessageRequest): Promise<string> {
     try {
       console.log('📤 Sending message:', messageData);
+      console.log('🔍 Conversation ID:', messageData.conversationId);
+      console.log('🔍 Conversation ID type:', typeof messageData.conversationId);
+      console.log('🔍 Conversation ID length:', messageData.conversationId?.length);
+      
+      if (!messageData.conversationId || messageData.conversationId.trim() === '') {
+        throw new Error('Conversation ID is required and cannot be empty');
+      }
       
       const batch = writeBatch(db);
       
@@ -230,12 +236,17 @@ class MessagingRepository {
         mutedBy: []
       };
       
-      await addDoc(this.conversationsCollection, conversation);
+      const docRef = await addDoc(this.conversationsCollection, conversation);
+      const conversationId = docRef.id;
+      
+      console.log('🔍 Created conversation with ID:', conversationId);
+      console.log('🔍 Conversation ID type:', typeof conversationId);
+      console.log('🔍 Conversation ID length:', conversationId?.length);
       
       // Send initial message if provided
       if (conversationData.initialMessage) {
         await this.sendMessage({
-          conversationId: conversationRef.id,
+          conversationId: conversationId,
           senderId: conversationData.participants[0],
           senderName: conversationData.participantNames[conversationData.participants[0]],
           senderEmail: conversationData.participantEmails[conversationData.participants[0]],
@@ -244,8 +255,8 @@ class MessagingRepository {
         });
       }
       
-      console.log('✅ Conversation created successfully:', conversationRef.id);
-      return conversationRef.id;
+      console.log('✅ Conversation created successfully:', conversationId);
+      return conversationId;
     } catch (error) {
       console.error('❌ Error creating conversation:', error);
       throw error;

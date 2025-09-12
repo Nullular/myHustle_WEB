@@ -7,6 +7,7 @@ import {
   Store, 
   Plus, 
   ArrowLeft,
+  Home,
   Star,
   Clock,
   MapPin,
@@ -80,12 +81,26 @@ export default function MyStoresPage() {
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <NeuButton
-              variant="default"
-              onClick={() => router.back()}
-            >
-              <ArrowLeft size={20} />
-            </NeuButton>
+            <div className="flex items-center space-x-2">
+              <NeuButton
+                variant="default"
+                onClick={() => router.back()}
+                className="flex items-center space-x-2"
+              >
+                <ArrowLeft size={20} />
+                <span className="hidden sm:block">Back</span>
+              </NeuButton>
+              
+              <NeuButton
+                variant="default"
+                onClick={() => router.push('/')}
+                className="flex items-center space-x-2"
+              >
+                <Home size={20} />
+                <span className="hidden sm:block">Main Screen</span>
+              </NeuButton>
+            </div>
+            
             <div>
               <h1 className="text-2xl font-bold text-gray-800">My Stores</h1>
               <p className="text-gray-600 text-sm">

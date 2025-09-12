@@ -17,7 +17,10 @@ import {
 import { NeuButton, NeuCard } from '@/components/ui';
 import { useAuthStore } from '@/lib/store/auth';
 import { bookingRepository } from '@/lib/firebase/repositories';
+import { messagingRepository } from '@/lib/firebase/repositories/messagingRepository';
+import { AuthService } from '@/lib/firebase/auth';
 import { Booking, BookingStatus } from '@/types';
+import { MessageType } from '@/types/messaging';
 
 export default function BookingRequestsPage() {
   const params = useParams();
@@ -33,6 +36,7 @@ export default function BookingRequestsPage() {
   const [showResponseDialog, setShowResponseDialog] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [actionType, setActionType] = useState<'accept' | 'deny'>('accept');
+  const [customMessage, setCustomMessage] = useState<string>('');
 
   // Load booking requests (following Android pattern exactly)
   useEffect(() => {
@@ -76,15 +80,65 @@ export default function BookingRequestsPage() {
     router.back();
   };
 
+  /**
+   * Create conversation and send automated message after booking response
+   */
+  const createBookingConversation = async (booking: Booking, isAccepted: boolean, messageContent: string) => {
+    try {
+      console.log('💬 Creating conversation for booking response...');
+      
+      // Get shop owner details (current user should be shop owner)
+      const shopOwner = user;
+      if (!shopOwner) {
+        throw new Error('Shop owner not authenticated');
+      }
+
+      // Create conversation participants
+      const participants = [booking.customerId, booking.shopOwnerId];
+      const participantNames = {
+        [booking.customerId]: booking.customerName,
+        [booking.shopOwnerId]: shopOwner.displayName || shopOwner.email
+      };
+      const participantEmails = {
+        [booking.customerId]: booking.customerEmail,
+        [booking.shopOwnerId]: shopOwner.email
+      };
+
+      // Create conversation
+      const conversationId = await messagingRepository.createConversation({
+        participants,
+        participantNames,
+        participantEmails,
+        initialMessage: messageContent, // Send message during conversation creation
+        businessContext: {
+          shopId: booking.shopId,
+          shopName: booking.shopName
+        }
+      });
+
+      console.log('✅ Booking conversation created successfully:', conversationId);
+      
+    } catch (error) {
+      console.error('❌ Failed to create booking conversation:', error);
+      // Don't throw error - booking response should still work even if messaging fails
+    }
+  };
+
   const handleAcceptRequest = (request: Booking) => {
     setSelectedRequest(request);
     setActionType('accept');
+    // Set default accept message
+    const defaultMessage = `✅ Your booking for "${request.serviceName}" at ${request.shopName} on ${request.requestedDate} at ${request.requestedTime} has been ACCEPTED. Looking forward to seeing you!`;
+    setCustomMessage(defaultMessage);
     setShowResponseDialog(true);
   };
 
   const handleDenyRequest = (request: Booking) => {
     setSelectedRequest(request);
     setActionType('deny');
+    // Set default deny message
+    const defaultMessage = `❌ Your booking for "${request.serviceName}" at ${request.shopName} on ${request.requestedDate} at ${request.requestedTime} has been DECLINED. Sorry for any inconvenience.`;
+    setCustomMessage(defaultMessage);
     setShowResponseDialog(true);
   };
 
@@ -115,6 +169,9 @@ export default function BookingRequestsPage() {
       }
       
       await bookingRepository.updateBookingStatus(selectedRequest.id, newStatus);
+      
+      // Create conversation and send automated message
+      await createBookingConversation(selectedRequest, actionType === 'accept', customMessage);
       
       // Remove from requests list
       setBookingRequests(prev => prev.filter(req => req.id !== selectedRequest.id));
@@ -319,29 +376,51 @@ export default function BookingRequestsPage() {
       {/* Response Dialog */}
       {showResponseDialog && selectedRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <NeuCard className="max-w-md w-full p-6">
+          <NeuCard className="max-w-lg w-full p-6">
             <h3 className="text-lg font-bold text-gray-800 mb-4">
               {actionType === 'accept' ? 'Accept' : 'Deny'} Booking Request
             </h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to {actionType} {selectedRequest.customerName}'s booking request for {selectedRequest.requestedDate} at {formatTime12Hour(selectedRequest.requestedTime)}?
+            <p className="text-gray-600 mb-4">
+              {actionType === 'accept' ? 'Accept' : 'Deny'} {selectedRequest.customerName}'s booking request for {selectedRequest.requestedDate} at {formatTime12Hour(selectedRequest.requestedTime)}
             </p>
+            
+            {/* Custom Message Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Message to Customer:
+              </label>
+              <textarea
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={4}
+                placeholder="Enter your message to the customer..."
+                disabled={isUpdating}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This message will be sent to the customer via chat
+              </p>
+            </div>
+            
             <div className="flex space-x-3">
               <NeuButton
                 variant="default"
                 onClick={confirmResponse}
-                disabled={isUpdating}
+                disabled={isUpdating || !customMessage.trim()}
                 className={`flex-1 ${
                   actionType === 'accept' 
                     ? 'bg-green-500 text-white hover:bg-green-600' 
                     : 'bg-red-500 text-white hover:bg-red-600'
                 }`}
               >
-                {isUpdating ? 'Processing...' : actionType === 'accept' ? 'Accept' : 'Deny'}
+                {isUpdating ? 'Processing...' : actionType === 'accept' ? 'Accept & Send Message' : 'Deny & Send Message'}
               </NeuButton>
               <NeuButton
                 variant="default"
-                onClick={() => setShowResponseDialog(false)}
+                onClick={() => {
+                  setShowResponseDialog(false);
+                  setCustomMessage('');
+                }}
                 disabled={isUpdating}
               >
                 Cancel

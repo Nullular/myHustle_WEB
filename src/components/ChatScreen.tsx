@@ -186,12 +186,10 @@ export default function ChatScreen({
 
   // Group messages by date for display
   const groupedMessages = useMemo(() => {
-    console.log('📝 Processing messages for display:', messages);
     const groups: { date: string; messages: Message[] }[] = [];
     let currentDate = '';
 
     messages.forEach((message) => {
-      console.log('📝 Message data:', message);
       const messageDate = formatMessageDate(message.timestamp);
       
       if (messageDate !== currentDate) {

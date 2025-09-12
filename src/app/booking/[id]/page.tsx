@@ -107,6 +107,8 @@ export default function BookingPage() {
       serviceName={service.name}
       shopName={shop.name}
       shopOwnerId={shop.ownerId}
+      shopOpenTime={shop.openTime24}
+      shopCloseTime={shop.closeTime24}
       service={service}
       onBack={handleBack}
       onSave={handleSave}

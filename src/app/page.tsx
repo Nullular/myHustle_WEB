@@ -13,6 +13,7 @@ import {
   Plus,
   Filter,
   Store,
+  MessageCircle,
 } from 'lucide-react';
 
 import { NeuButton, NeuCard, NeuInput } from '@/components/ui';
@@ -186,6 +187,11 @@ export default function Home() {
                         <Link href="/orders" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                           <ShoppingCart className="h-4 w-4 mr-2" />
                           Orders
+                        </Link>
+
+                        <Link href="/messages" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Messages
                         </Link>
 
                         {user.userType === 'BUSINESS_OWNER' && (

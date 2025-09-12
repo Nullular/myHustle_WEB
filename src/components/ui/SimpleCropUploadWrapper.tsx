@@ -38,6 +38,7 @@ export default function SimpleCropUploadWrapper({
         onImagesChange={onImagesChange}
         cropType={cropType}
         maxImages={maxImages}
+        uploadPath={uploadPath}
         placeholder={`Upload ${cropType === 'square' ? 'square' : 'banner'} image`}
       />
     </div>

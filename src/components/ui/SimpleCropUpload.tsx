@@ -13,6 +13,7 @@ export interface ImageUploadWithCropProps {
   maxImages?: number;
   className?: string;
   placeholder?: string;
+  uploadPath?: string;
 }
 
 export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
@@ -21,7 +22,8 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
   cropType,
   maxImages = 1,
   className = '',
-  placeholder
+  placeholder,
+  uploadPath
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
@@ -141,12 +143,30 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
         `cropped-image-${Date.now()}.jpg`
       );
 
-      // Upload to Firebase Storage
-      const uploadPath = cropType === 'square' ? 'products/images' : 'shops/banners';
-      const downloadURL = await imageUploadService.uploadImage(croppedFile, uploadPath);
+      // For single image uploads (like logos), delete existing images first
+      if (maxImages === 1 && images.length > 0) {
+        console.log('🔄 Replacing existing image...');
+        // Delete old image from storage
+        for (const oldImageUrl of images) {
+          try {
+            await imageUploadService.deleteImage(oldImageUrl);
+            console.log('🗑️ Old image deleted successfully');
+          } catch (deleteError: any) {
+            if (deleteError?.code === 'storage/object-not-found') {
+              console.warn('⚠️ Old image was already deleted or path not found');
+            } else {
+              console.warn('⚠️ Could not delete old image from storage:', deleteError.message);
+            }
+          }
+        }
+      }
 
-      // Add to images array
-      const newImages = [...images, downloadURL];
+      // Upload to Firebase Storage with proper path
+      const finalUploadPath = uploadPath || (cropType === 'square' ? 'products/images' : 'shops/banners');
+      const downloadURL = await imageUploadService.uploadImage(croppedFile, finalUploadPath);
+
+      // For single image (logo), replace entirely. For multiple images, add to array
+      const newImages = maxImages === 1 ? [downloadURL] : [...images, downloadURL];
       if (newImages.length <= maxImages) {
         onImagesChange(newImages);
       }
@@ -157,7 +177,7 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       setCrop(undefined);
       setCompletedCrop(undefined);
       
-      console.log('✅ All images uploaded successfully');
+      console.log('✅ Image uploaded successfully');
     } catch (error) {
       console.error('❌ Error uploading image:', error);
       alert('Failed to upload image. Please try again.');

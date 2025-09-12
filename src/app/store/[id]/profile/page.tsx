@@ -256,7 +256,7 @@ export default function StoreProfilePage() {
                 images={logoImages}
                 onImagesChange={setLogoImages}
                 maxImages={1}
-                uploadPath={`shops/logos/${storeId}`}
+                uploadPath={`shops/${storeId}/logo`}
                 usage="store-logo"
                 title=""
                 subtitle=""
@@ -277,7 +277,7 @@ export default function StoreProfilePage() {
                 images={bannerImages}
                 onImagesChange={setBannerImages}
                 maxImages={1}
-                uploadPath={`shops/banners/${storeId}`}
+                uploadPath={`shops/${storeId}/banner`}
                 usage="store-banner"
                 title=""
                 subtitle=""

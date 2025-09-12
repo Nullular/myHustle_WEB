@@ -249,7 +249,7 @@ export default function CreateStorePage() {
                 images={logoImages}
                 onImagesChange={setLogoImages}
                 maxImages={1}
-                uploadPath={`shops/logos/${Date.now()}`}
+                uploadPath={`shops/temp-${Date.now()}/logo`}
                 title=""
                 subtitle=""
               />

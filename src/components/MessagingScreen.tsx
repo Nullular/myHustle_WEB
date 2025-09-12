@@ -35,83 +35,7 @@ export default function MessagingScreen({ onStartNewChat, onBackClick }: Messagi
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Convert conversations to message previews
-  const messagePreviews = useMemo(() => {
-    if (!user || !conversations.length) return [];
-
-    return conversations
-      .filter(conv => conv.isActive)
-      .map(conversation => {
-        // Find the other participant
-        const otherParticipantId = conversation.participants.find(id => id !== user.id);
-        if (!otherParticipantId) return null;
-
-        return {
-          conversationId: conversation.id,
-          otherParticipantId,
-          otherParticipantName: conversation.participantNames[otherParticipantId] || 'Unknown User',
-          otherParticipantEmail: conversation.participantEmails[otherParticipantId] || '',
-          otherParticipantAvatar: conversation.participantAvatars[otherParticipantId],
-          lastMessage: conversation.lastMessage || 'No messages yet',
-          timestamp: formatTimestamp(conversation.lastMessageTimestamp),
-          unreadCount: conversation.unreadCount[user.id] || 0,
-          businessContext: conversation.businessContext
-        } as MessagePreview;
-      })
-      .filter(preview => preview !== null) as MessagePreview[];
-  }, [conversations, user]);
-
-  // Filter previews based on search
-  const filteredPreviews = useMemo(() => {
-    if (!searchQuery.trim()) return messagePreviews;
-    
-    const query = searchQuery.toLowerCase();
-    return messagePreviews.filter(preview => 
-      preview.otherParticipantName.toLowerCase().includes(query) ||
-      preview.lastMessage.toLowerCase().includes(query) ||
-      preview.businessContext?.shopName?.toLowerCase().includes(query)
-    );
-  }, [messagePreviews, searchQuery]);
-
-  // Load conversations on mount
-  useEffect(() => {
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
-
-    let subscription: ConversationSubscription | null = null;
-
-    const loadConversations = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Set up real-time listener
-        subscription = messagingRepository.subscribeToUserConversations(
-          user.id,
-          (updatedConversations) => {
-            setConversations(updatedConversations);
-            setIsLoading(false);
-          }
-        );
-
-      } catch (err: any) {
-        console.error('❌ Error loading conversations:', err);
-        setError(err.message || 'Failed to load conversations');
-        setIsLoading(false);
-      }
-    };
-
-    loadConversations();
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
-  }, [user, router]);
-
+  // Helper function to format timestamps
   const formatTimestamp = (timestamp: number): string => {
     if (!timestamp) return '';
     
@@ -139,10 +63,104 @@ export default function MessagingScreen({ onStartNewChat, onBackClick }: Messagi
     }
   };
 
+  // Convert conversations to message previews
+  const messagePreviews = useMemo(() => {
+    if (!user || !conversations.length) {
+      console.log('📝 No conversations to convert to previews - user:', !!user, 'conversations:', conversations.length);
+      return [];
+    }
+
+    console.log('🔄 Converting conversations to message previews, currentUserId:', user.id);
+
+    return conversations
+      .filter(conv => conv.active && !conv.archived) // Match your database fields
+      .map(conversation => {
+        // Find the other participant
+        const otherParticipantId = conversation.participants.find(id => id !== user.id);
+        if (!otherParticipantId) return null;
+
+        const otherParticipant = conversation.participantInfo[otherParticipantId];
+        if (!otherParticipant) return null;
+
+        return {
+          conversationId: conversation.id,
+          otherParticipantId,
+          otherParticipantName: otherParticipant.displayName || 'Unknown User',
+          otherParticipantEmail: otherParticipant.email || '',
+          otherParticipantAvatar: otherParticipant.photoUrl,
+          lastMessage: conversation.lastMessage.content || 'No messages yet',
+          timestamp: formatTimestamp(conversation.lastMessage.timestamp?.toMillis?.() || Date.now()),
+          unreadCount: conversation.unreadCount[user.id] || 0,
+          businessContext: conversation.shopId ? {
+            shopId: conversation.shopId,
+            shopName: conversation.title || 'Business Chat'
+          } : undefined
+        } as MessagePreview;
+      })
+      .filter(preview => preview !== null) as MessagePreview[];
+  }, [conversations, user]);
+
+  // Filter previews based on search
+  const filteredPreviews = useMemo(() => {
+    if (!searchQuery.trim()) return messagePreviews;
+    
+    const query = searchQuery.toLowerCase();
+    return messagePreviews.filter(preview => 
+      preview.otherParticipantName.toLowerCase().includes(query) ||
+      preview.lastMessage.toLowerCase().includes(query) ||
+      preview.businessContext?.shopName?.toLowerCase().includes(query)
+    );
+  }, [messagePreviews, searchQuery]);
+
+  // Load conversations on mount - matches Android MessageRepository.startConversationsListener()
+  useEffect(() => {
+    // Match Android: val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    if (!user) {
+      console.log('❌ No authenticated user, redirecting to login');
+      router.push('/login');
+      return;
+    }
+
+    console.log('✅ Starting conversations listener for user:', user.id);
+    let subscription: ConversationSubscription | null = null;
+
+    const loadConversations = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Set up real-time listener - matches Android addSnapshotListener
+        subscription = messagingRepository.subscribeToUserConversations(
+          user.id,
+          (updatedConversations) => {
+            console.log('📦 Conversations updated:', updatedConversations.length, 'conversations');
+            setConversations(updatedConversations);
+            setIsLoading(false);
+          }
+        );
+
+      } catch (err: any) {
+        console.error('❌ Error loading conversations:', err);
+        setError(err.message || 'Failed to load conversations');
+        setIsLoading(false);
+      }
+    };
+
+    loadConversations();
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, [user, router]);
+
   const handleConversationClick = async (preview: MessagePreview) => {
     try {
+      if (!user) return;
+      
       // Mark as read
-      await messagingRepository.markConversationAsRead(preview.conversationId, user!.id);
+      await messagingRepository.markConversationAsRead(preview.conversationId, user.id);
       
       // Navigate to chat screen
       router.push(`/chat/${preview.conversationId}?participantId=${preview.otherParticipantId}&participantName=${encodeURIComponent(preview.otherParticipantName)}`);

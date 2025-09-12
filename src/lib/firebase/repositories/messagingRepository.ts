@@ -27,7 +27,7 @@ import {
 } from '@/types/messaging';
 
 class MessagingRepository {
-  private conversationsCollection = collection(db, 'conversations');
+  private conversationsCollection = collection(db, 'chats'); // Changed from 'conversations' to 'chats'
   private messagesCollection = collection(db, 'messages');
 
   /**
@@ -37,10 +37,10 @@ class MessagingRepository {
     try {
       console.log('🔍 Fetching conversations for user:', userId);
       
+      // Following Android pattern: only filter by participants, sort in memory to avoid composite index
       const q = query(
         this.conversationsCollection,
-        where('participants', 'array-contains', userId),
-        orderBy('lastMessageTimestamp', 'desc')
+        where('participants', 'array-contains', userId)
       );
       
       const snapshot = await getDocs(q);
@@ -50,8 +50,15 @@ class MessagingRepository {
         ...doc.data()
       } as Conversation));
       
-      console.log(`✅ Found ${conversations.length} conversations for user ${userId}`);
-      return conversations;
+      // Sort by lastMessage timestamp in memory (Android pattern)
+      const sortedConversations = conversations.sort((a, b) => {
+        const timeA = a.lastMessage?.timestamp || a.updatedAt || 0;
+        const timeB = b.lastMessage?.timestamp || b.updatedAt || 0;
+        return timeB - timeA; // Descending order (newest first)
+      });
+      
+      console.log(`✅ Found ${sortedConversations.length} conversations for user ${userId}`);
+      return sortedConversations;
     } catch (error) {
       console.error('❌ Error getting user conversations:', error);
       return [];
@@ -65,10 +72,12 @@ class MessagingRepository {
     try {
       console.log('🔍 Fetching messages for conversation:', conversationId);
       
+      // Messages are in subcollection: /chats/{chatId}/messages
+      const messagesCollection = collection(db, 'chats', conversationId, 'messages');
+      
+      // Avoid composite index by not using orderBy - sort in memory like Android
       const q = query(
-        this.messagesCollection,
-        where('conversationId', '==', conversationId),
-        orderBy('timestamp', 'desc'),
+        messagesCollection,
         limit(limitCount)
       );
       
@@ -78,11 +87,24 @@ class MessagingRepository {
         id: doc.id,
         ...doc.data()
       } as Message));
+
+      // Sort by timestamp in memory (Android pattern)
+      const sortedMessages = messages.sort((a, b) => {
+        // Handle both Firestore Timestamp and number timestamp formats
+        const getTime = (timestamp: any) => {
+          if (!timestamp) return 0;
+          if (typeof timestamp === 'number') return timestamp;
+          if (timestamp.toMillis) return timestamp.toMillis();
+          if (timestamp.seconds) return timestamp.seconds * 1000;
+          return 0;
+        };
+        
+        const timeA = getTime(a.timestamp);
+        const timeB = getTime(b.timestamp);
+        return timeA - timeB; // Ascending order (oldest first)
+      });
       
-      // Return in chronological order (oldest first)
-      const sortedMessages = messages.reverse();
-      
-      console.log(`✅ Found ${messages.length} messages for conversation ${conversationId}`);
+      console.log(`✅ Found ${sortedMessages.length} messages for conversation ${conversationId}`);
       return sortedMessages;
     } catch (error) {
       console.error('❌ Error getting conversation messages:', error);
@@ -99,8 +121,9 @@ class MessagingRepository {
       
       const batch = writeBatch(db);
       
-      // Add message
-      const messageRef = doc(this.messagesCollection);
+      // Add message to subcollection
+      const messagesRef = collection(db, 'chats', messageData.conversationId, 'messages');
+      const messageRef = doc(messagesRef);
       const message = {
         ...messageData,
         timestamp: Date.now(),
@@ -109,12 +132,17 @@ class MessagingRepository {
       
       batch.set(messageRef, message);
       
-      // Update conversation
-      const conversationRef = doc(this.conversationsCollection, messageData.conversationId);
+      // Update conversation in main chats collection
+      const conversationRef = doc(db, 'chats', messageData.conversationId);
       const conversationUpdate = {
-        lastMessage: messageData.text,
-        lastMessageTimestamp: Date.now(),
-        lastMessageSenderId: messageData.senderId,
+        lastMessage: {
+          content: messageData.text,
+          senderId: messageData.senderId,
+          senderName: messageData.senderName || 'User',
+          timestamp: Date.now(),
+          messageType: messageData.type || MessageType.TEXT,
+          deleted: false
+        },
         updatedAt: Date.now()
       };
       
@@ -162,20 +190,44 @@ class MessagingRepository {
       const conversationRef = doc(this.conversationsCollection);
       const conversation: Omit<Conversation, 'id'> = {
         participants: conversationData.participants,
-        participantNames: conversationData.participantNames,
-        participantEmails: conversationData.participantEmails,
-        participantAvatars: {},
-        lastMessage: conversationData.initialMessage,
-        lastMessageTimestamp: Date.now(),
-        lastMessageSenderId: conversationData.participants[0],
+        participantInfo: conversationData.participants.reduce((acc, participantId, index) => {
+          acc[participantId] = {
+            displayName: conversationData.participantNames?.[participantId] || `User ${index}`,
+            email: conversationData.participantEmails?.[participantId] || '',
+            userId: participantId,
+            photoUrl: null,
+            role: 'member',
+            joinedAt: Date.now(),
+            lastSeen: Date.now()
+          };
+          return acc;
+        }, {} as Record<string, any>),
+        lastMessage: {
+          content: conversationData.initialMessage || '',
+          senderId: conversationData.participants[0],
+          senderName: conversationData.participantNames?.[conversationData.participants[0]] || 'User',
+          timestamp: Date.now(),
+          messageType: 'text',
+          deleted: false
+        },
         unreadCount: conversationData.participants.reduce((acc, participantId) => {
           acc[participantId] = participantId === conversationData.participants[0] ? 0 : 1;
           return acc;
         }, {} as Record<string, number>),
-        isActive: true,
+        active: true,
+        archived: false,
+        type: 'DIRECT',
+        contextType: 'GENERAL',
         createdAt: Date.now(),
         updatedAt: Date.now(),
-        businessContext: conversationData.businessContext
+        createdBy: conversationData.participants[0],
+        title: null,
+        description: null,
+        photoUrl: null,
+        shopId: conversationData.businessContext?.shopId || null,
+        contextId: null,
+        lastReadBy: {},
+        mutedBy: []
       };
       
       await addDoc(this.conversationsCollection, conversation);
@@ -253,6 +305,7 @@ class MessagingRepository {
 
   /**
    * Subscribe to real-time conversation updates for a user
+   * Matches Android MessageRepository.startConversationsListener() exactly
    */
   subscribeToUserConversations(
     userId: string, 
@@ -260,22 +313,47 @@ class MessagingRepository {
   ): ConversationSubscription {
     console.log('🔔 Setting up real-time conversation listener for user:', userId);
     
+    // Match Android: whereArrayContains("participants", currentUserId)
     const q = query(
       this.conversationsCollection,
-      where('participants', 'array-contains', userId),
-      orderBy('lastMessageTimestamp', 'desc')
+      where('participants', 'array-contains', userId)
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const conversations = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Conversation));
+      console.log('🔥 Firebase snapshot received:', snapshot.size, 'documents');
       
-      console.log(`🔔 Real-time update: ${conversations.length} conversations`);
-      callback(conversations);
+      // Match Android: snapshot.documents.mapNotNull with error handling
+      const conversationList = snapshot.docs.map(doc => {
+        try {
+          const data = doc.data();
+          console.log('📄 Document ID:', doc.id);
+          
+          // Fix: Don't let data.id overwrite the actual document ID
+          const { id: dataId, ...restData } = data;
+          const conversation = {
+            id: doc.id, // Always use the Firebase document ID
+            ...restData
+          } as Conversation;
+          
+          console.log('📋 Parsed conversation with correct ID:', conversation.id);
+          return conversation;
+        } catch (e) {
+          console.error('❌ Error parsing conversation from document:', e);
+          return null;
+        }
+      }).filter(conv => conv !== null) as Conversation[];
+      
+      // Match Android: sortedByDescending { it.lastMessageTime }
+      const sortedConversations = conversationList.sort((a, b) => {
+        const timeA = a.lastMessage?.timestamp?.toMillis?.() || a.updatedAt?.toMillis?.() || 0;
+        const timeB = b.lastMessage?.timestamp?.toMillis?.() || b.updatedAt?.toMillis?.() || 0;
+        return timeB - timeA; // Descending order (newest first)
+      });
+      
+      console.log(`✅ Calling callback with ${sortedConversations.length} conversations`);
+      callback(sortedConversations);
     }, (error) => {
-      console.error('❌ Error in conversation listener:', error);
+      console.error('❌ Conversations listener error:', error);
       callback([]);
     });
     
@@ -292,10 +370,10 @@ class MessagingRepository {
   ): MessageSubscription {
     console.log('🔔 Setting up real-time message listener for conversation:', conversationId);
     
+    // Use subcollection and avoid orderBy to prevent composite index requirement
+    const messagesRef = collection(db, 'chats', conversationId, 'messages');
     const q = query(
-      this.messagesCollection,
-      where('conversationId', '==', conversationId),
-      orderBy('timestamp', 'desc'),
+      messagesRef,
       limit(limitCount)
     );
     
@@ -305,8 +383,22 @@ class MessagingRepository {
         ...doc.data()
       } as Message));
       
-      // Return in chronological order (oldest first)
-      const sortedMessages = messages.reverse();
+      // Sort in memory like Android implementation
+      const sortedMessages = messages
+        .sort((a, b) => {
+          // Handle both Firestore Timestamp and number timestamp formats
+          const getTime = (timestamp: any) => {
+            if (!timestamp) return 0;
+            if (typeof timestamp === 'number') return timestamp;
+            if (timestamp.toMillis) return timestamp.toMillis();
+            if (timestamp.seconds) return timestamp.seconds * 1000;
+            return 0;
+          };
+          
+          const timeA = getTime(a.timestamp);
+          const timeB = getTime(b.timestamp);
+          return timeA - timeB; // Oldest first (chronological order)
+        });
       
       console.log(`🔔 Real-time update: ${messages.length} messages`);
       callback(sortedMessages);

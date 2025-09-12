@@ -150,8 +150,23 @@ export default function ChatScreen({
     });
   };
 
-  const formatMessageDate = (timestamp: number): string => {
-    const date = new Date(timestamp);
+  const formatMessageDate = (timestamp: any): string => {
+    // Handle both Firestore Timestamp and number timestamp formats
+    let date: Date;
+    if (!timestamp) {
+      date = new Date();
+    } else if (typeof timestamp === 'number') {
+      date = new Date(timestamp);
+    } else if (timestamp.toDate) {
+      // Firestore Timestamp
+      date = timestamp.toDate();
+    } else if (timestamp.seconds) {
+      // Firestore Timestamp object format
+      date = new Date(timestamp.seconds * 1000);
+    } else {
+      date = new Date(timestamp);
+    }
+    
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -171,10 +186,12 @@ export default function ChatScreen({
 
   // Group messages by date for display
   const groupedMessages = useMemo(() => {
+    console.log('📝 Processing messages for display:', messages);
     const groups: { date: string; messages: Message[] }[] = [];
     let currentDate = '';
 
     messages.forEach((message) => {
+      console.log('📝 Message data:', message);
       const messageDate = formatMessageDate(message.timestamp);
       
       if (messageDate !== currentDate) {
@@ -288,9 +305,9 @@ export default function ChatScreen({
                 </div>
 
                 {/* Messages */}
-                {group.messages.map((message) => (
+                {group.messages.map((message, messageIndex) => (
                   <MessageBubble
-                    key={message.id}
+                    key={message.id || `message-${groupIndex}-${messageIndex}`}
                     message={message}
                     isOwnMessage={message.senderId === user?.id}
                     showTime={true}
@@ -365,6 +382,30 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, isOwnMessage, showTime }: MessageBubbleProps) {
+  // Helper function to format timestamp
+  const formatTimestamp = (timestamp: any): string => {
+    let date: Date;
+    if (!timestamp) {
+      date = new Date();
+    } else if (typeof timestamp === 'number') {
+      date = new Date(timestamp);
+    } else if (timestamp.toDate) {
+      // Firestore Timestamp
+      date = timestamp.toDate();
+    } else if (timestamp.seconds) {
+      // Firestore Timestamp object format
+      date = new Date(timestamp.seconds * 1000);
+    } else {
+      date = new Date(timestamp);
+    }
+    
+    return date.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -383,7 +424,7 @@ function MessageBubble({ message, isOwnMessage, showTime }: MessageBubbleProps) 
         >
           {/* Message content */}
           <p className="text-sm whitespace-pre-wrap break-words">
-            {message.text}
+            {message.text || message.content || 'No message content'}
           </p>
           
           {/* Timestamp */}
@@ -393,11 +434,7 @@ function MessageBubble({ message, isOwnMessage, showTime }: MessageBubbleProps) 
                 isOwnMessage ? 'text-blue-100' : 'text-gray-500'
               }`}
             >
-              {new Date(message.timestamp).toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-              })}
+              {formatTimestamp(message.timestamp)}
             </p>
           )}
         </div>

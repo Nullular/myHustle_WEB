@@ -252,11 +252,14 @@ export default function BookingScreen({
   }, [selectedStartDate, selectedEndDate]);
 
   const isDateSelectionValid = useMemo(() => {
-    if (!selectedStartDate || !selectedEndDate) return false;
+    if (!selectedStartDate) return false;
+    
+    // For single day bookings, only need start date
+    const endDateToCheck = selectedEndDate || selectedStartDate;
     
     // Check if any day in the selected range is blocked (EXACT same logic as store calendar)
     const start = new Date(selectedStartDate);
-    const end = new Date(selectedEndDate);
+    const end = new Date(endDateToCheck);
     
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split('T')[0]; // EXACT same format as store calendar
@@ -270,15 +273,15 @@ export default function BookingScreen({
   }, [selectedStartDate, selectedEndDate, confirmedBookings]);
 
   const isCompleteBookingValid = useMemo(() => {
-    if (!selectedStartDate || !selectedEndDate || !isDateSelectionValid) return false;
+    if (!selectedStartDate || !isDateSelectionValid) return false;
     
     // For single day bookings, require time slot selection
     if (isSingleDayBooking) {
       return selectedTimeSlot !== null;
     }
     
-    // For multi-day bookings, time slot is not required
-    return true;
+    // For multi-day bookings, need both dates and time slot is not required
+    return selectedEndDate !== null;
   }, [selectedStartDate, selectedEndDate, isDateSelectionValid, isSingleDayBooking, selectedTimeSlot]);
 
   // Load confirmed bookings on mount (EXACT same logic as store owner calendar)
@@ -407,7 +410,7 @@ export default function BookingScreen({
       const bookingId = await bookingRepository.createBooking(booking);
       
       console.log('✅ Booking created successfully with ID:', bookingId);
-      alert(`Booking request sent successfully! Booking ID: ${bookingId}`);
+      console.log('🎉 Booking request sent successfully!');
       
       // Reset form and close dialog
       setSelectedStartDate(null);

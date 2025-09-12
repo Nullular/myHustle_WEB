@@ -69,7 +69,7 @@ interface CalendarDayCellProps {
 
 export function CalendarDayCell({ day, onDateClick }: CalendarDayCellProps) {
   const getButtonStyle = () => {
-    if (day.isBlocked) return 'neu-button bg-red-100 text-red-600 border border-red-200'; // Raised neumorphic with red
+    if (day.isBlocked) return 'bg-transparent text-gray-400 opacity-50'; // Same as other unclickable dates but slightly visible
     if (day.isStartOfRange || day.isEndOfRange) return 'neu-pressed bg-blue-500 text-white';
     if (day.isInRange) return 'neu-pressed bg-blue-200 text-blue-700';
     if (day.isToday && day.isCurrentMonth) return 'neu-button bg-blue-300 text-white border-2 border-blue-400';

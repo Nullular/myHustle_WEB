@@ -12,6 +12,7 @@ import { NeuButton, NeuCard, NeuSwitch } from '@/components/ui';
 import { AuthService } from '@/lib/firebase/auth';
 import { useAuthStore } from '@/lib/store/auth';
 import { SignUpForm, UserType } from '@/types';
+import { testerValidationService } from '@/lib/firebase/testerValidationService';
 
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -54,6 +55,15 @@ export default function SignUpPage() {
     setError(null);
 
     try {
+      // First, validate if email is allowed for testers
+      const emailValidation = await testerValidationService.validateTesterEmail(data.email);
+      
+      if (!emailValidation.isValid) {
+        setError(emailValidation.message || 'This platform is only available to our loyal testers!');
+        setIsLoading(false);
+        return;
+      }
+
       const user = await AuthService.signUp(data);
       setUser(user);
       

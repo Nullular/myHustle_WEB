@@ -13,7 +13,6 @@ import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
 import { AuthService } from '@/lib/firebase/auth';
 import { useAuthStore } from '@/lib/store/auth';
 import { LoginForm, UserType } from '@/types';
-import { getDemoCredentials, getRealShopOwnerCredentials, REAL_SHOP_OWNERS } from '@/lib/demo/demoAuth';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -54,63 +53,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = async (userType: 'customer' | 'businessOwner') => {
-    const credentials = getDemoCredentials(userType);
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const user = await AuthService.signIn(credentials);
-      setUser(user);
-      
-      // Redirect based on user type
-      if (user.userType === UserType.BUSINESS_OWNER) {
-        router.push('/dashboard');
-      } else {
-        router.push('/');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Demo login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRealShopOwnerLogin = async (ownerKey: string) => {
-    const credentials = REAL_SHOP_OWNERS[ownerKey as keyof typeof REAL_SHOP_OWNERS];
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const user = await AuthService.signIn(credentials);
-      setUser(user);
-      
-      // Always redirect to home page
-      router.push('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Shop owner login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleShopOwnerLogin = async (credentials: { email: string; password: string }) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const user = await AuthService.signIn(credentials);
-      setUser(user);
-      
-      // Always redirect to home page
-      router.push('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Shop owner login failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleInputChange = () => {
     if (error) {
       setError(null);
@@ -132,7 +74,7 @@ export default function LoginPage() {
 
         {/* Login Form Card */}
         <NeuDescriptionBox>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 p-2">
             {/* Error Message */}
             {error && (
               <div className="p-4 rounded-lg bg-red-50 border border-red-200">
@@ -141,102 +83,60 @@ export default function LoginPage() {
             )}
 
             {/* Email Field */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <div className="relative mb-6">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10">
                 <Mail size={20} />
               </div>
               <input
                 type="email"
                 placeholder="Email address"
-                className="neu-input pl-12 w-full"
+                className="neu-input pl-12 pr-4 py-3 w-full h-12 text-base"
                 {...register('email')}
                 onChange={handleInputChange}
               />
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                <p className="text-red-500 text-sm mt-2">{errors.email.message}</p>
               )}
             </div>
 
             {/* Password Field */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <div className="relative mb-6">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10">
                 <Lock size={20} />
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
-                className="neu-input pl-12 pr-12 w-full"
+                className="neu-input pl-12 pr-12 py-3 w-full h-12 text-base"
                 {...register('password')}
                 onChange={handleInputChange}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 z-10"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+                <p className="text-red-500 text-sm mt-2">{errors.password.message}</p>
               )}
             </div>
 
             {/* Sign In Button */}
-            <NeuButton
-              type="submit"
-              className="w-full h-12"
-              isLoading={isLoading}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </NeuButton>
-
-            {/* Demo Login Buttons - For Development */}
-            <div className="pt-4 border-t border-gray-200">
-              <p className="text-center text-sm text-gray-500 mb-3">Quick Demo Login</p>
-              <div className="flex space-x-2 mb-3">
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin('customer')}
-                  disabled={isLoading}
-                  className="flex-1 px-3 py-2 text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg disabled:opacity-50"
-                >
-                  Demo Customer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin('businessOwner')}
-                  disabled={isLoading}
-                  className="flex-1 px-3 py-2 text-sm bg-green-50 text-green-600 hover:bg-green-100 rounded-lg disabled:opacity-50"
-                >
-                  Demo Business
-                </button>
-              </div>
-              
-              {/* Real Shop Owner Accounts */}
-              <p className="text-center text-sm text-gray-500 mb-3">Real Shop Owners</p>
-              <div className="flex space-x-2">
-                <button
-                  type="button"
-                  onClick={() => handleRealShopOwnerLogin('shopOwner1')}
-                  disabled={isLoading}
-                  className="flex-1 px-3 py-2 text-sm bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg disabled:opacity-50"
-                >
-                  Shop Owner 1
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRealShopOwnerLogin('shopOwner2')}
-                  disabled={isLoading}
-                  className="flex-1 px-3 py-2 text-sm bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg disabled:opacity-50"
-                >
-                  Shop Owner 2
-                </button>
-              </div>
+            <div className="mt-8">
+              <NeuButton
+                type="submit"
+                className="w-full h-12"
+                isLoading={isLoading}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Signing In...' : 'Sign In'}
+              </NeuButton>
             </div>
 
             {/* Sign Up Link */}
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-2 mt-6">
               <p className="text-gray-600">
                 Don&apos;t have an account?{' '}
                 <Link 

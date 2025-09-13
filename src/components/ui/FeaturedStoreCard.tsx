@@ -12,7 +12,11 @@ const FeaturedStoreCard: React.FC<FeaturedStoreCardProps> = ({ shop }) => {
     <StyledWrapper>
       <div className="card">
         <div className="icon">
-          <img src={shop.logoUrl} alt={`${shop.name} logo`} className="icon-img" />
+          <img 
+            src={shop.logoUrl || '/file.svg'} 
+            alt={`${shop.name} logo`} 
+            className="icon-img" 
+          />
         </div>
         <div className="content">
           <h3>{shop.name}</h3>

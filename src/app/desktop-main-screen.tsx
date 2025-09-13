@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { Shop, User, UserType } from '@/types/models';
 import FeaturedStores from '@/components/ui/FeaturedStores';
-import GrandOpeningBanner from '@/components/ui/GrandOpeningBanner';
 
 interface DesktopMainScreenProps {
   user: (User & { displayName?: string | null; email?: string | null; userType?: UserType }) | null;
@@ -195,7 +194,9 @@ export default function DesktopMainScreen({
 
           {/* SLEEK FILTER CHIPS - HORIZONTAL SCROLL ON MOBILE */}
           <div className="flex items-center space-x-3 overflow-x-auto pt-2 pb-4 scrollbar-hide">
-            <Filter className="h-5 w-5 text-gray-400 flex-shrink-0" />
+            <div className="flex-shrink-0 w-5 flex justify-center">
+              <Filter className="h-5 w-5 text-gray-400" />
+            </div>
             {filterCategories.map((category) => (
               <button
                 key={category}
@@ -209,15 +210,14 @@ export default function DesktopMainScreen({
                 {category}
               </button>
             ))}
+            <div className="flex-shrink-0 w-5">
+              {/* Spacer for symmetry */}
+            </div>
           </div>
         </div>
 
         <div className="my-8">
           <FeaturedStores shops={shops} />
-        </div>
-
-        <div className="my-8">
-          <GrandOpeningBanner />
         </div>
 
         {/* SLEEK SHOPS GRID - MOBILE-FIRST RESPONSIVE */}

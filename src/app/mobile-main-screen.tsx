@@ -17,7 +17,6 @@ import {
 import FavoriteButton from '../components/ui/FavoriteButton';
 import { Shop, User, UserType } from '@/types/models';
 import FeaturedStores from '@/components/ui/FeaturedStores';
-import GrandOpeningBanner from '@/components/ui/GrandOpeningBanner';
 
 interface MobileMainScreenProps {
   user: (User & { displayName?: string | null; email?: string | null; userType?: UserType }) | null;
@@ -121,7 +120,7 @@ export default function MobileMainScreen({
       <main className="p-4">
         {/* Search Bar */}
         <div className="relative mb-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
           <input
             type="text"
             placeholder="Search shops..."
@@ -131,28 +130,33 @@ export default function MobileMainScreen({
           />
         </div>
 
-        {/* Filter Chips */}
-        <div className="flex items-center space-x-2 overflow-x-auto pt-2 pb-4 scrollbar-hide mb-4">
-          <Filter className="h-6 w-6 text-gray-400 flex-shrink-0" />
-          {filterCategories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`whitespace-nowrap font-medium transition-all duration-200 text-black neu-card neu-chip ${
-                selectedCategory === category ? 'neu-pressed scale-110' : ''
-              }`}
+        {/* Filter Dropdown */}
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="flex-shrink-0 w-6 flex justify-center">
+            <Filter className="h-6 w-6 text-gray-400" />
+          </div>
+          <div className="flex-1">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="neu-input w-full py-2 px-3 text-sm rounded-lg bg-white border-0 focus:ring-2 focus:ring-blue-500"
+              title="Filter by category"
+              aria-label="Filter shops by category"
             >
-              {category}
-            </button>
-          ))}
+              {filterCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-shrink-0 w-6">
+            {/* Spacer for symmetry */}
+          </div>
         </div>
 
         <div className="my-4">
           <FeaturedStores shops={shops} />
-        </div>
-
-        <div className="my-4">
-          <GrandOpeningBanner />
         </div>
 
         {/* Shops Grid */}

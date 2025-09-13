@@ -28,6 +28,21 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
+  const [isReplacing, setIsReplacing] = useState(false);
+  const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
+  
+  // Handle clicking on existing image to replace it
+  const handleImageEditClick = useCallback((index: number) => {
+    setIsReplacing(true);
+    setReplacingIndex(index);
+    fileInputRef.current?.click();
+  }, []);
+
+  // Reset replacing state
+  const resetReplacingState = useCallback(() => {
+    setIsReplacing(false);
+    setReplacingIndex(null);
+  }, []);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [crop, setCrop] = useState<CropType>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -150,42 +165,32 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       throw new Error('No 2d context');
     }
 
-    // The image is scaled by zoom, so we need to adjust our calculations
-    // The displayed image dimensions
-    const displayedWidth = image.width * zoom;
-    const displayedHeight = image.height * zoom;
-    
-    // Scale from displayed coordinates to natural image coordinates
-    const scaleX = image.naturalWidth / displayedWidth;
-    const scaleY = image.naturalHeight / displayedHeight;
-
-    // Calculate offset for centering (since zoom transforms from center)
-    const offsetX = (displayedWidth - image.width) / 2;
-    const offsetY = (displayedHeight - image.height) / 2;
-
-    // Adjust crop coordinates to account for zoom and centering
-    const adjustedCrop = {
-      x: (crop.x + offsetX) * scaleX,
-      y: (crop.y + offsetY) * scaleY,
-      width: crop.width * scaleX,
-      height: crop.height * scaleY
-    };
-
-    // Set canvas to desired output size
+    // Simple mathematical crop - use crop coordinates directly from react-image-crop
+    // The crop coordinates are already converted to pixels in the calling function
     canvas.width = crop.width;
     canvas.height = crop.height;
 
-    // Draw the cropped portion
+    console.log('🎯 Mathematical crop (no zoom calculations):', {
+      imageNaturalSize: { width: image.naturalWidth, height: image.naturalHeight },
+      cropPixels: crop,
+      outputCanvas: { width: canvas.width, height: canvas.height }
+    });
+
+    // Fill with white background to prevent transparency issues
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Direct crop from natural image using the pixel coordinates
     ctx.drawImage(
       image,
-      adjustedCrop.x,
-      adjustedCrop.y,
-      adjustedCrop.width,
-      adjustedCrop.height,
-      0,
-      0,
-      crop.width,
-      crop.height
+      crop.x,      // source x coordinate
+      crop.y,      // source y coordinate
+      crop.width,  // source width
+      crop.height, // source height
+      0,           // destination x
+      0,           // destination y
+      crop.width,  // destination width
+      crop.height  // destination height
     );
 
     return new Promise((resolve) => {
@@ -254,14 +259,24 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       console.log('✅ Upload successful, URL:', downloadURL);
 
       // Update images array
-      const newImages = maxImages === 1 ? [downloadURL] : [...images, downloadURL];
+      let newImages: string[];
+      if (isReplacing && replacingIndex !== null) {
+        // Replace the specific image
+        newImages = [...images];
+        newImages[replacingIndex] = downloadURL;
+      } else {
+        // Add new image (existing logic)
+        newImages = maxImages === 1 ? [downloadURL] : [...images, downloadURL];
+      }
+      
       if (newImages.length <= maxImages) {
         onImagesChange(newImages);
         console.log('✅ Images state updated successfully');
       }
 
-      // Reset crop modal state
+      // Reset crop modal state and replacing state
       handleCropCancel();
+      resetReplacingState();
       
     } catch (error) {
       console.error('❌ Error uploading image:', error);
@@ -284,7 +299,8 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
     setCurrentImageIndex(null);
     setCrop(undefined);
     setCompletedCrop(undefined);
-  }, [imageToCrop]);
+    resetReplacingState(); // Reset replacing state when canceling
+  }, [imageToCrop, resetReplacingState]);
 
   const removeImage = async (index: number) => {
     try {
@@ -360,16 +376,23 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
               <img
                 src={imageUrl}
                 alt={`Uploaded ${index + 1}`}
-                className="w-full h-full object-cover rounded-lg border border-gray-200"
+                className="w-full h-full object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => handleImageEditClick(index)}
+                title="Click to replace this image"
               />
               <button
                 type="button"
                 onClick={() => removeImage(index)}
                 aria-label={`Remove image ${index + 1}`}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
               >
                 <X className="w-3 h-3" />
               </button>
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white bg-opacity-90 rounded-full p-2">
+                  <span className="text-xs text-gray-700 font-medium">Click to edit</span>
+                </div>
+              </div>
             </div>
           ))}
           

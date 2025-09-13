@@ -103,7 +103,7 @@ export default function MyStoresPage() {
             
             <div>
               <h1 className="text-2xl font-bold text-gray-800">My Stores</h1>
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-600 text-sm hidden sm:block">
                 Manage your business locations
               </p>
             </div>

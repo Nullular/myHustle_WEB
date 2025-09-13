@@ -104,30 +104,7 @@ export function MobileServiceScreen({
           </div>
         </div>
 
-        <div className="neu-card rounded-2xl p-4">
-          <h3 className="text-lg font-bold text-gray-800 mb-3">Quantity</h3>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-700 font-medium">Number of bookings</span>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="neu-card p-3 rounded-lg"
-                disabled={quantity <= 1}
-                aria-label="Decrease quantity"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <span className="text-xl font-bold w-8 text-center">{quantity}</span>
-              <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="neu-card p-3 rounded-lg"
-                aria-label="Increase quantity"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+            {/* Quantity selector removed for customer booking */}
         
         {service.tags && service.tags.length > 0 && (
           <div className="neu-card rounded-2xl p-4">

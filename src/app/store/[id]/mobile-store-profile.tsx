@@ -173,10 +173,13 @@ export default function MobileStoreProfileScreen({
               <span className="text-gray-700">{shop.phone}</span>
             </div>
           </div>
-           <button onClick={onContactOwner} className="w-full mt-4 h-8 rounded-xl neu-pressed bg-blue-600 text-white font-medium flex items-center justify-center space-x-2">
-            <MessageCircle className="h-4 w-4" />
-            <span>Contact Store Owner</span>
-          </button>
+           <button
+             onClick={onContactOwner}
+             className="w-full mt-4 h-10 rounded-xl bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 text-white font-bold flex items-center justify-center space-x-2 shadow-lg transition-all duration-150"
+           >
+             <MessageCircle className="h-5 w-5 mr-2 text-white" />
+             <span>Contact Store Owner</span>
+           </button>
         </div>
       </div>
     </div>

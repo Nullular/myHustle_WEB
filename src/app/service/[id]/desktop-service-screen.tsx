@@ -172,31 +172,7 @@ export function DesktopServiceScreen({
         </div>
 
         {/* Quantity Selection */}
-        <NeuCard className="p-6 mb-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Quantity</h3>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-700">Number of bookings:</span>
-            
-            <div className="flex items-center space-x-4">
-              <NeuButton
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="p-2"
-                disabled={quantity <= 1}
-              >
-                <Minus className="h-4 w-4" />
-              </NeuButton>
-              
-              <span className="text-2xl font-bold min-w-8 text-center">{quantity}</span>
-              
-              <NeuButton
-                onClick={() => setQuantity(quantity + 1)}
-                className="p-2"
-              >
-                <Plus className="h-4 w-4" />
-              </NeuButton>
-            </div>
-          </div>
-        </NeuCard>
+            {/* Quantity selector removed for customer booking */}
 
         {/* Reviews Section */}
         <NeuCard className="p-6 mb-6">

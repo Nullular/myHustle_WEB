@@ -233,3 +233,33 @@
   box-shadow: 20px 20px 40px var(--neu-shadow-dark), 
               -20px -20px 40px var(--neu-shadow-light);
 }
+
+/* Small chip style for filter chips and similar elements */
+.neu-chip {
+  /* asymmetric padding: top/bottom 0.25rem, right 1.25rem, left 0.5rem */
+  padding: 0.25rem 1.25rem 0.25rem 0.5rem;
+  border-radius: var(--neu-radius-sm);
+  font-size: 0.75rem; /* ~text-xs */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1; /* ensure consistent centering */
+}
+
+/* Chip-specific shadows: smaller and contained to avoid overflow */
+.neu-card.neu-chip {
+  /* match asymmetric padding so neu-card doesn't override */
+  padding: 0.25rem 1.25rem 0.25rem 0.5rem;
+  box-shadow: 6px 6px 12px rgba(190,190,190,0.8), -6px -6px 12px rgba(255,255,255,0.9);
+  background: var(--neu-bg-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* contain subtle shadows */
+}
+
+/* Toned-down pressed/inset look for chips */
+.neu-chip.neu-pressed {
+  box-shadow: inset 2px 4px 8px rgba(50,50,93,0.08), inset -2px -4px 8px rgba(255,255,255,0.7);
+  transform: scale(1.06); /* slight scale when active */
+}

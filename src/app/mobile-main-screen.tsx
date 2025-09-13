@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import FavoriteButton from '../components/ui/FavoriteButton';
 import { Shop, User, UserType } from '@/types/models';
+import FeaturedStores from '@/components/ui/FeaturedStores';
+import GrandOpeningBanner from '@/components/ui/GrandOpeningBanner';
 
 interface MobileMainScreenProps {
   user: (User & { displayName?: string | null; email?: string | null; userType?: UserType }) | null;
@@ -66,8 +68,8 @@ export default function MobileMainScreen({
             <h1 className="text-xl font-bold text-gray-800">MyHustle</h1>
           </div>
           <div className="flex items-center space-x-2">
-            <Link href="/cart" className="neu-card p-2.5 rounded-lg relative">
-              <ShoppingCart className="h-5 w-5 text-gray-600" />
+            <Link href="/cart" className="neu-card p-1.5 rounded-lg relative">
+              <ShoppingCart className="h-4 w-4 text-gray-600" />
               {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">
                   {totalItems}
@@ -75,8 +77,8 @@ export default function MobileMainScreen({
               )}
             </Link>
             <div className="relative">
-              <button onClick={() => setShowUserMenu(!showUserMenu)} className="neu-card p-2.5 rounded-lg" aria-label="Open user menu">
-                <UserIcon className="h-5 w-5 text-gray-600" />
+              <button onClick={() => setShowUserMenu(!showUserMenu)} className="neu-card p-1.5 rounded-lg" aria-label="Open user menu">
+                <UserIcon className="h-4 w-4 text-gray-600" />
               </button>
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-56 neu-card rounded-lg shadow-lg z-50 p-2">
@@ -130,19 +132,27 @@ export default function MobileMainScreen({
         </div>
 
         {/* Filter Chips */}
-        <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-hide mb-4">
-          <Filter className="h-5 w-5 text-gray-400 flex-shrink-0" />
+        <div className="flex items-center space-x-2 overflow-x-auto pt-2 pb-4 scrollbar-hide mb-4">
+          <Filter className="h-6 w-6 text-gray-400 flex-shrink-0" />
           {filterCategories.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                selectedCategory === category ? 'neu-pressed' : 'neu-card'
+              className={`whitespace-nowrap font-medium transition-all duration-200 text-black neu-card neu-chip ${
+                selectedCategory === category ? 'neu-pressed scale-110' : ''
               }`}
             >
               {category}
             </button>
           ))}
+        </div>
+
+        <div className="my-4">
+          <FeaturedStores shops={shops} />
+        </div>
+
+        <div className="my-4">
+          <GrandOpeningBanner />
         </div>
 
         {/* Shops Grid */}
@@ -156,6 +166,7 @@ export default function MobileMainScreen({
                     <FavoriteButton
                       isFavorite={favorites.has(shop.id)}
                       toggleFavorite={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(shop.id); }}
+                      size={25}
                     />
                   </div>
                 </div>

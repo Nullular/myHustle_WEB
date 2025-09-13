@@ -5,13 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "build:capacitor": "CAPACITOR_BUILD=true next build",
     "start": "next start",
-    "lint": "eslint",
-    "build:mobile": "npm run build:capacitor && npx cap sync",
-    "open:android": "npx cap open android",
-    "run:android": "npx cap run android",
-    "sync": "npx cap sync"
+    "lint": "eslint"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",

@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Explicitly NOT using static export
+  output: undefined,
+  
   images: {
     remotePatterns: [
       {

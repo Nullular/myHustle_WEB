@@ -348,6 +348,36 @@ class BookingRepository {
       throw error;
     }
   }
+
+  /**
+   * Get pending bookings for a specific customer
+   */
+  async getPendingBookingsForCustomer(customerId: string): Promise<Booking[]> {
+    try {
+      console.log(`🔍 Getting pending bookings for customer ${customerId}`);
+      
+      const q = query(
+        this.collectionRef,
+        where('customerId', '==', customerId),
+        where('status', '==', 'PENDING')
+      );
+      const snapshot = await getDocs(q);
+      
+      const bookings = snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id
+      } as Booking));
+
+      // Sort by creation date, newest first
+      const sortedBookings = bookings.sort((a, b) => b.createdAt - a.createdAt);
+      
+      console.log(`✅ Found ${bookings.length} pending bookings for customer ${customerId}`);
+      return sortedBookings;
+    } catch (error) {
+      console.error('❌ Error getting pending bookings for customer:', error);
+      return [];
+    }
+  }
 }
 
 export const bookingRepository = new BookingRepository();

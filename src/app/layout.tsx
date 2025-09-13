@@ -115,9 +115,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="light" data-theme="light">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 light`}
+        data-theme="light"
       >
         <Providers>
           <StyledComponentsRegistry>{children}</StyledComponentsRegistry>

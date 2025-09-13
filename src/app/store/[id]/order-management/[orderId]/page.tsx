@@ -85,7 +85,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   };
 
   const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+    return `R${amount.toFixed(2)}`;
   };
 
   // Loading state
@@ -202,7 +202,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
           {/* Customer Information */}
           <NeuCard className="p-6">
             <div className="flex items-center space-x-3 mb-4">
-              <User className="h-6 w-6 text-blue-600" />
+              <button onClick={() => router.push('/profile')} aria-label="Go to profile" title="Go to profile" className="p-1 rounded-full hover:bg-gray-100">
+                <User className="h-6 w-6 text-blue-600 cursor-pointer" />
+              </button>
               <h2 className="text-xl font-bold text-gray-800">Customer Information</h2>
             </div>
             
@@ -395,8 +397,8 @@ function OrderItemCard({ item }: { item: any }) {
             <span className="text-sm text-gray-600">
               Quantity: {item.quantity}
             </span>
-            <span className="font-bold text-lg">
-              ${(item.price * item.quantity).toFixed(2)}
+            <span className="font-bold text-lg text-gray-900">
+              R{(item.price * item.quantity).toFixed(2)}
             </span>
           </div>
         </div>

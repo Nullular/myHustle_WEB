@@ -16,8 +16,10 @@ import {
   Camera
 } from 'lucide-react';
 
-import { NeuButton, NeuCard, ImageUpload } from '@/components/ui';
+import { NeuButton, NeuCard } from '@/components/ui';
+import SimpleCropUpload from '@/components/ui/SimpleCropUploadWrapper';
 import { useAuthStore } from '@/lib/store/auth';
+import { BUSINESS_CATEGORIES } from '@/lib/data/categories';
 import { shopRepository } from '@/lib/firebase/repositories';
 import { Shop } from '@/types/models';
 import CreateButton from '@/components/ui/CreateButton';
@@ -53,14 +55,11 @@ export default function CreateStorePage() {
   const [logoImages, setLogoImages] = useState<string[]>([]);
   const [bannerImages, setBannerImages] = useState<string[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  // Stable upload path suffix to avoid changing during a session
+  const [sessionStamp] = useState(() => `${Date.now()}`);
   
   // UI state
   const [isLoading, setIsLoading] = useState(false);
-
-  const categories = [
-    'Electronics', 'Clothing', 'Home & Garden', 'Sports', 
-    'Beauty', 'Books', 'Toys', 'Food & Beverages', 'Other'
-  ];
 
   const daysOfWeek = [
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 
@@ -155,7 +154,8 @@ export default function CreateStorePage() {
         responseTime: '1 hour',
         tags: [],
         specialties: [],
-        priceRange: '$$',
+  // Localized price range marker for ZAR context
+  priceRange: 'RR',
         deliveryOptions: [],
         paymentMethods: ['Cash', 'Card'],
         catalog: [],
@@ -246,11 +246,12 @@ export default function CreateStorePage() {
                   Upload your store logo. This will appear as your profile picture.
                 </p>
               </div>
-              <ImageUpload
+              <SimpleCropUpload
                 images={logoImages}
                 onImagesChange={setLogoImages}
                 maxImages={1}
-                uploadPath={`shops/temp-${Date.now()}/logo`}
+                uploadPath={`shops/temp-${sessionStamp}/logo`}
+                usage="store-logo"
                 title=""
                 subtitle=""
               />
@@ -266,11 +267,12 @@ export default function CreateStorePage() {
                   Upload a banner image for your store header. Recommended size: 1200x400px.
                 </p>
               </div>
-              <ImageUpload
+              <SimpleCropUpload
                 images={bannerImages}
                 onImagesChange={setBannerImages}
                 maxImages={1}
-                uploadPath={`shops/banners/${Date.now()}`}
+                uploadPath={`shops/banners/${sessionStamp}`}
+                usage="store-banner"
                 title=""
                 subtitle=""
               />
@@ -286,11 +288,12 @@ export default function CreateStorePage() {
                   Upload up to 4 photos showcasing your store, products, or services.
                 </p>
               </div>
-              <ImageUpload
+              <SimpleCropUpload
                 images={galleryImages}
                 onImagesChange={setGalleryImages}
                 maxImages={4}
-                uploadPath={`shops/gallery/${Date.now()}`}
+                uploadPath={`shops/gallery/${sessionStamp}`}
+                usage="product"
                 title=""
                 subtitle=""
               />
@@ -343,7 +346,7 @@ export default function CreateStorePage() {
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                     title="Select store category"
                   >
-                    {categories.map(category => (
+                    {BUSINESS_CATEGORIES.map(category => (
                       <option key={category} value={category}>
                         {category}
                       </option>

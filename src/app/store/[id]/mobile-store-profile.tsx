@@ -30,6 +30,7 @@ interface MobileStoreProfileProps {
     storeId: string;
     getProductImageUrl: (item: Product) => string | null;
     getServiceImageUrl: (item: Service) => string | null;
+  onContactOwner: () => void;
 }
 
 export default function MobileStoreProfileScreen({
@@ -44,6 +45,7 @@ export default function MobileStoreProfileScreen({
   storeId,
   getProductImageUrl,
   getServiceImageUrl,
+  onContactOwner,
 }: MobileStoreProfileProps) {
 
   const storeStatus = useMemo(() => {
@@ -171,7 +173,7 @@ export default function MobileStoreProfileScreen({
               <span className="text-gray-700">{shop.phone}</span>
             </div>
           </div>
-           <button className="w-full mt-4 h-8 rounded-xl neu-pressed bg-blue-600 text-white font-medium flex items-center justify-center space-x-2">
+           <button onClick={onContactOwner} className="w-full mt-4 h-8 rounded-xl neu-pressed bg-blue-600 text-white font-medium flex items-center justify-center space-x-2">
             <MessageCircle className="h-4 w-4" />
             <span>Contact Store Owner</span>
           </button>

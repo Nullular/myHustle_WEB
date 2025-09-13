@@ -21,6 +21,7 @@ import { NeuButton, NeuCard } from '@/components/ui';
 import { useAuthStore } from '@/lib/store/auth';
 import { useShop } from '@/hooks/useShops';
 import { useShopProducts, useShopServices } from '@/hooks/useProducts';
+import { PRODUCT_CATEGORIES } from '@/lib/data/categories';
 
 export default function CatalogManagementPage() {
   const params = useParams();
@@ -53,7 +54,7 @@ export default function CatalogManagementPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['all', 'Electronics', 'Clothing', 'Food', 'Beauty', 'Consultation', 'Repair', 'Other'];
+  const categories = ['all', ...PRODUCT_CATEGORIES];
 
   const handleAddProduct = () => {
     console.log('📦 Navigating to add product page...');
@@ -357,8 +358,8 @@ export default function CatalogManagementPage() {
                         {item.description}
                       </p>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-lg font-bold text-green-600">
-                          ${item.itemType === 'service' ? item.basePrice : item.price}
+                        <span className="text-lg font-bold text-gray-900">
+                          R{item.itemType === 'service' ? item.basePrice : item.price}
                         </span>
                         {item.category && (
                           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
@@ -445,8 +446,8 @@ export default function CatalogManagementPage() {
                           {item.description}
                         </p>
                         <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="font-bold text-green-600">
-                            ${item.itemType === 'service' ? item.basePrice : item.price}
+                          <span className="font-bold text-gray-900">
+                            R{item.itemType === 'service' ? item.basePrice : item.price}
                           </span>
                           {item.category && (
                             <span>{item.category}</span>

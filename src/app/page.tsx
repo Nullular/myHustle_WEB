@@ -11,10 +11,7 @@ import MobileMainScreen from './mobile-main-screen';
 import { Shop } from '@/types';
 import { NeuButton } from '@/components/ui';
 import Loader from '@/components/ui/Loader';
-
-const filterCategories = [
-  'All', 'Featured', 'Popular', 'Coffee', 'Tech', 'Beauty', 'Services', 'Products', 'Open Now'
-];
+import { FILTER_CATEGORIES } from '@/lib/data/categories';
 
 export default function Home() {
   const { user } = useAuthStore();
@@ -64,10 +61,17 @@ export default function Home() {
     const matchesCategory = (() => {
       switch (selectedCategory) {
         case 'All': return true;
-        case 'Featured': return (shop.rating || 0) >= 4.5;
-        case 'Popular': return (shop.rating || 0) >= 4.5;
+        case 'Featured': return (shop.rating || 0) >= 4.5 || (shop as any).premium === true || shop.isPremium === true;
+        case 'Popular': return (shop.totalReviews || 0) >= 10 || (shop.rating || 0) >= 4.0;
         case 'Open Now': return isShopOpen(shop);
-        default: return shop.category === selectedCategory;
+        default: 
+          // Check if shop category matches selected category
+          // Handle case-insensitive matching and variations
+          const shopCategory = (shop.category || '').toLowerCase().trim();
+          const selectedLower = selectedCategory.toLowerCase().trim();
+          return shopCategory === selectedLower || 
+                 shopCategory.includes(selectedLower) ||
+                 selectedLower.includes(shopCategory);
       }
     })();
 
@@ -123,7 +127,7 @@ export default function Home() {
     toggleFavorite,
     handleSignOut,
     isShopOpen,
-    filterCategories,
+    filterCategories: [...FILTER_CATEGORIES],
     filteredShops,
   };
 

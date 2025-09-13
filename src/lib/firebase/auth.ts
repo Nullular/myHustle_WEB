@@ -65,7 +65,7 @@ export class AuthService {
             notifications: true,
             emailMarketing: false,
             language: 'en',
-            currency: 'USD',
+            currency: 'ZAR',
             theme: 'light',
           }
         }
@@ -121,7 +121,7 @@ export class AuthService {
             notifications: true,
             emailMarketing: false,
             language: 'en',
-            currency: 'USD',
+            currency: 'ZAR',
             theme: 'light',
           }
         }
@@ -192,7 +192,7 @@ export class AuthService {
             notifications: true,
             emailMarketing: false,
             language: 'en',
-            currency: 'USD',
+            currency: 'ZAR',
             theme: 'light',
           }
         }

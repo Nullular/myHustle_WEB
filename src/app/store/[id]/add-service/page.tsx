@@ -82,7 +82,7 @@ export default function AddServicePage({ params }: AddServicePageProps) {
         basePrice: Number(basePrice),
         primaryImageUrl: selectedImages[0] || '',
         imageUrls: selectedImages,
-        currency: 'USD',
+  currency: 'ZAR',
         category: selectedCategory,
         estimatedDuration: Number(duration) || 60,
         isBookable: true,

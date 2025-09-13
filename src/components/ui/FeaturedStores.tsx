@@ -10,6 +10,14 @@ interface FeaturedStoresProps {
 }
 
 const FeaturedStores: React.FC<FeaturedStoresProps> = ({ shops }) => {
+  // Debug log
+  console.log('🏪 FeaturedStores - Shops data:', shops.map(shop => ({ 
+    id: shop.id, 
+    name: shop.name,
+    hasId: !!shop.id,
+    idLength: shop.id?.length || 0
+  })));
+
   // Duplicate shops to create a seamless loop
   const extendedShops = [...shops, ...shops];
 
@@ -19,9 +27,15 @@ const FeaturedStores: React.FC<FeaturedStoresProps> = ({ shops }) => {
       <div className="scroller">
         <div className="scroller-inner">
           {extendedShops.map((shop, index) => (
-            <Link href={`/store/${shop.id}`} key={`${shop.id}-${index}`}>
-              <FeaturedStoreCard shop={shop} />
-            </Link>
+            shop.id ? (
+              <Link href={`/store/${shop.id}`} key={`${shop.id}-${index}`}>
+                <FeaturedStoreCard shop={shop} />
+              </Link>
+            ) : (
+              <div key={`invalid-${index}`} onClick={() => console.warn('⚠️ Shop without ID:', shop)}>
+                <FeaturedStoreCard shop={shop} />
+              </div>
+            )
           ))}
         </div>
       </div>

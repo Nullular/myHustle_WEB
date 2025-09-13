@@ -106,9 +106,9 @@ export class CheckoutService {
       specifications: {}
     }));
 
-    // Calculate totals
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const deliveryFee = 2.99; // Match the value from checkout page
+  // Calculate totals (ZAR)
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const deliveryFee = 30.0; // Flat delivery fee in ZAR
     const total = subtotal + deliveryFee;
 
     // Create order data matching Android app structure
@@ -129,8 +129,8 @@ export class CheckoutService {
       serviceFee: 0.0,
       discount: 0.0,
       discountCode: '',
-      total,
-      currency: 'USD',
+  total,
+  currency: 'ZAR',
       
       // Status
       status: OrderStatus.PENDING,

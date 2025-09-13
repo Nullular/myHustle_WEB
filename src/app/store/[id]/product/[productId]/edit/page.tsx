@@ -17,6 +17,7 @@ import { useAuthStore } from '@/lib/store/auth';
 import { useShop } from '@/hooks/useShops';
 import { productRepository } from '@/lib/firebase/repositories';
 import { Product } from '@/types/models';
+import { PRODUCT_CATEGORIES } from '@/lib/data/categories';
 
 export default function EditProductPage() {
   const params = useParams();
@@ -50,12 +51,6 @@ export default function EditProductPage() {
   const [newTag, setNewTag] = useState('');
   const [newSpecKey, setNewSpecKey] = useState('');
   const [newSpecValue, setNewSpecValue] = useState('');
-
-  const categories = [
-    'Electronics', 'Clothing', 'Home & Garden', 'Sports', 
-    'Beauty', 'Books', 'Toys', 'Food & Beverages', 'Automotive',
-    'Health & Wellness', 'Office Supplies', 'Pet Supplies', 'Other'
-  ];
 
   const currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'];
 
@@ -345,7 +340,7 @@ export default function EditProductPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     title="Select product category"
                   >
-                    {categories.map(cat => (
+                    {PRODUCT_CATEGORIES.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>

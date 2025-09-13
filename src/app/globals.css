@@ -7,18 +7,32 @@
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* Force light theme - override system dark mode preferences */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #e0e0e0 !important;
+    --foreground: #171717 !important;
   }
+}
+
+/* Additional light theme enforcement */
+html, html.light, html[data-theme="light"] {
+  --background: #e0e0e0 !important;
+  --foreground: #171717 !important;
+  color-scheme: light !important;
+}
+
+/* Override any dark theme classes */
+.dark,
+html.dark,
+html[data-theme="dark"],
+[data-theme="dark"],
+body.dark {
+  --background: #e0e0e0 !important;
+  --foreground: #171717 !important;
+  background: #e0e0e0 !important;
+  color: #171717 !important;
+  color-scheme: light !important;
 }
 
 body {
@@ -27,6 +41,15 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
   min-height: 100vh;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
 }
 
 /* Fix input text visibility */

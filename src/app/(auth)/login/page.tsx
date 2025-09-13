@@ -8,8 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import { NeuButton, NeuInput } from '@/components/ui';
-import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
+import { NeuButton, NeuInput, NeuCard } from '@/components/ui';
 import { AuthService } from '@/lib/firebase/auth';
 import { useAuthStore } from '@/lib/store/auth';
 import { LoginForm, UserType } from '@/types';
@@ -53,6 +52,31 @@ export default function LoginPage() {
     }
   };
 
+  const handleDemoLogin = async (userType: 'customer' | 'businessOwner') => {
+    // Demo login removed - production auth only.
+  };
+
+  const handleRealShopOwnerLogin = async (ownerKey: string) => {
+    // Real shop owner demo removed.
+  };
+
+  const handleShopOwnerLogin = async (credentials: { email: string; password: string }) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const user = await AuthService.signIn(credentials);
+      setUser(user);
+      
+      // Always redirect to home page
+      router.push('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Shop owner login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleInputChange = () => {
     if (error) {
       setError(null);
@@ -73,8 +97,8 @@ export default function LoginPage() {
         </div>
 
         {/* Login Form Card */}
-        <NeuDescriptionBox>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 p-2">
+        <NeuCard className="p-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Error Message */}
             {error && (
               <div className="p-4 rounded-lg bg-red-50 border border-red-200">
@@ -83,60 +107,62 @@ export default function LoginPage() {
             )}
 
             {/* Email Field */}
-            <div className="relative mb-6">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10">
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                 <Mail size={20} />
               </div>
               <input
                 type="email"
                 placeholder="Email address"
-                className="neu-input pl-12 pr-4 py-3 w-full h-12 text-base"
+                className="neu-input pl-16 w-full"
+                style={{ paddingLeft: '4.5rem' }}
                 {...register('email')}
                 onChange={handleInputChange}
               />
               {errors.email && (
-                <p className="text-red-500 text-sm mt-2">{errors.email.message}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
               )}
             </div>
 
             {/* Password Field */}
-            <div className="relative mb-6">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10">
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                 <Lock size={20} />
               </div>
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
-                className="neu-input pl-12 pr-12 py-3 w-full h-12 text-base"
+                className="neu-input pl-16 pr-16 w-full"
+                style={{ paddingLeft: '4.5rem', paddingRight: '4.5rem' }}
                 {...register('password')}
                 onChange={handleInputChange}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 z-10"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
               {errors.password && (
-                <p className="text-red-500 text-sm mt-2">{errors.password.message}</p>
+                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
               )}
             </div>
 
             {/* Sign In Button */}
-            <div className="mt-8">
-              <NeuButton
-                type="submit"
-                className="w-full h-12"
-                isLoading={isLoading}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Signing In...' : 'Sign In'}
-              </NeuButton>
-            </div>
+            <NeuButton
+              type="submit"
+              className="w-full h-12"
+              isLoading={isLoading}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing In...' : 'Sign In'}
+            </NeuButton>
+
+            {/* Demo UI removed for production */}
 
             {/* Sign Up Link */}
-            <div className="text-center space-y-2 mt-6">
+            <div className="text-center space-y-2">
               <p className="text-gray-600">
                 Don&apos;t have an account?{' '}
                 <Link 
@@ -148,7 +174,7 @@ export default function LoginPage() {
               </p>
             </div>
           </form>
-        </NeuDescriptionBox>
+        </NeuCard>
       </div>
     </div>
   );

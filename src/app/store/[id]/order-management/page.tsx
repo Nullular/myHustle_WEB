@@ -92,7 +92,7 @@ export default function OrderManagementPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+    return `R${amount.toFixed(2)}`;
   };
 
   // More lenient loading state - only block if we don't have a user
@@ -287,6 +287,29 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
   }
 
   const statusInfo = getOrderStatusInfo(order.status);
+
+  const getStatusChipClasses = (status: OrderStatus) => {
+    switch (status) {
+      case OrderStatus.PENDING:
+        return 'bg-orange-50 text-orange-600 border border-orange-200';
+      case OrderStatus.CONFIRMED:
+        return 'bg-green-50 text-green-600 border border-green-200';
+      case OrderStatus.PREPARING:
+        return 'bg-purple-50 text-purple-600 border border-purple-200';
+      case OrderStatus.READY:
+        return 'bg-green-50 text-green-600 border border-green-200';
+      case OrderStatus.SHIPPED:
+        return 'bg-blue-50 text-blue-600 border border-blue-200';
+      case OrderStatus.DELIVERED:
+        return 'bg-green-50 text-green-600 border border-green-200';
+      case OrderStatus.CANCELLED:
+        return 'bg-red-50 text-red-600 border border-red-200';
+      case OrderStatus.REFUNDED:
+        return 'bg-red-50 text-red-600 border border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-600 border border-gray-200';
+    }
+  };
   
   // Ensure we have valid items array
   const itemCount = order.items?.length || 0;
@@ -309,12 +332,7 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
                 </p>
               </div>
               <div 
-                className="px-3 py-1 rounded-full text-xs font-medium"
-                style={{ 
-                  backgroundColor: `${statusInfo.color}20`,
-                  color: statusInfo.color,
-                  border: `1px solid ${statusInfo.color}40`
-                }}
+                className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusChipClasses(order.status)}`}
               >
                 {statusInfo.text}
               </div>
@@ -322,7 +340,7 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
             
             <div className="flex items-center justify-between text-sm text-gray-600">
               <span>
-                {itemCount} item{itemCount !== 1 ? 's' : ''} • ${orderTotal.toFixed(2)}
+                {itemCount} item{itemCount !== 1 ? 's' : ''} • R{orderTotal.toFixed(2)}
               </span>
               <span>
                 {new Date(order.createdAt || Date.now()).toLocaleDateString('en-US', {

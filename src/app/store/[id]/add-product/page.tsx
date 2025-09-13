@@ -21,6 +21,7 @@ import { useAuthStore } from '@/lib/store/auth';
 import { productRepository } from '@/lib/firebase/repositories';
 import { Product } from '@/types/models';
 import CreateButton from '@/components/ui/CreateButton';
+import { PRODUCT_CATEGORIES } from '@/lib/data/categories';
 
 interface ProductVariant {
   name: string;
@@ -62,11 +63,7 @@ export default function AddProductPage({ params }: AddProductPageProps) {
   const [showSizeVariantDialog, setShowSizeVariantDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
-
-  const categories = [
-    'Electronics', 'Clothing', 'Home & Garden', 'Sports', 
-    'Beauty', 'Books', 'Toys', 'Food & Beverages', 'Other'
-  ];
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Resolve async params
   useEffect(() => {
@@ -81,14 +78,26 @@ export default function AddProductPage({ params }: AddProductPageProps) {
   }, [user, router]);
 
   const isFormValid = () => {
-    return productName.trim() !== '' && 
+    const basicValid = productName.trim() !== '' && 
            productPrice.trim() !== '' && 
            !isNaN(Number(productPrice)) &&
            Number(productPrice) > 0;
+    const hasImage = (selectedImages[0] || '').trim() !== '';
+    return basicValid && hasImage;
   };
 
   const handleSaveProduct = async () => {
-    if (!isFormValid() || !user || !storeId) return;
+    if (!user || !storeId) return;
+
+    if (!isFormValid()) {
+      const errors: string[] = [];
+      if (!productName.trim()) errors.push('Enter product name.');
+      if (!(selectedImages[0] || '').trim()) errors.push('Add at least one product image.');
+      if (!productPrice.trim() || isNaN(Number(productPrice)) || Number(productPrice) <= 0) errors.push('Enter a valid price greater than 0.');
+      setValidationError(errors.join(' '));
+      setTimeout(() => setValidationError(null), 4000);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -98,7 +107,7 @@ export default function AddProductPage({ params }: AddProductPageProps) {
         price: Number(productPrice),
         primaryImageUrl: selectedImages[0] || '',
         imageUrls: selectedImages,
-        currency: 'USD',
+  currency: 'ZAR',
         category: selectedCategory,
         inStock: Number(stockQuantity) > 0,
         stockQuantity: Number(stockQuantity) || 0,
@@ -296,7 +305,7 @@ export default function AddProductPage({ params }: AddProductPageProps) {
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                     aria-label="Product category"
                   >
-                    {categories.map(category => (
+                    {PRODUCT_CATEGORIES.map(category => (
                       <option key={category} value={category}>
                         {category}
                       </option>
@@ -362,6 +371,11 @@ export default function AddProductPage({ params }: AddProductPageProps) {
           />
 
           {/* Bottom Actions */}
+          {validationError && (
+            <div className="mb-2 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg p-3">
+              {validationError}
+            </div>
+          )}
           <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex space-x-4">
             <NeuButton
               variant="default"

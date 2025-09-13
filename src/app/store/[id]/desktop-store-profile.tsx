@@ -9,7 +9,8 @@ import {
   MapPin, 
   Phone, 
   Calendar,
-  ShoppingCart
+  ShoppingCart,
+  MessageCircle
 } from 'lucide-react';
 import ShareButton from '@/components/ui/ShareButton';
 import { Shop, Product, Service, User } from '@/types';
@@ -32,6 +33,7 @@ interface StoreProfileProps {
     storeId: string;
     getProductImageUrl: (item: Product) => string | null;
     getServiceImageUrl: (item: Service) => string | null;
+  onContactOwner: () => void;
 }
 
 export default function DesktopStoreProfileScreen({
@@ -46,6 +48,7 @@ export default function DesktopStoreProfileScreen({
   storeId,
   getProductImageUrl,
   getServiceImageUrl,
+  onContactOwner,
 }: StoreProfileProps) {
   const storeStatus = useMemo(() => {
     if (!shop || !shop.openTime24 || !shop.closeTime24) {
@@ -76,14 +79,61 @@ export default function DesktopStoreProfileScreen({
   }, [shop]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
-      <div className="relative w-full h-80 overflow-hidden">
-        <div className="relative w-full h-52 overflow-hidden">
-          {shop.bannerUrl ? (
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 relative">
+      {/* Fixed Banner and Navigation */}
+      <div className="fixed top-0 left-0 right-0 z-10">
+        <div className="relative w-full h-[50vh] overflow-hidden">
+          <div className="relative w-full h-full overflow-hidden">
+            {shop.bannerUrl ? (
+              <img
+                src={shop.bannerUrl}
+                alt={`${shop.name} banner`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+            ) : null}
+            <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-r from-blue-500/90 to-purple-600/90 text-white text-2xl font-bold ${shop.bannerUrl ? 'hidden' : ''}`}>
+              {shop.name}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Buttons - Separate from banner for better z-index handling */}
+      <div className="fixed top-4 left-4 right-4 flex justify-between items-center z-50" style={{ pointerEvents: 'auto' }}>
+        <button
+          onClick={() => router.back()}
+          className="w-16 h-16 rounded-full flex items-center justify-center bg-white shadow-md hover:bg-gray-100"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-8 w-8 text-gray-700" />
+        </button>
+        <div className="flex space-x-4">
+          <div onClick={handleShare}>
+            <ShareButton onClick={handleShare} />
+          </div>
+          <div>
+            <FavoriteButton 
+              size={50}
+              isFavorite={isFavorite}
+              toggleFavorite={() => toggleFavorite()}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Detached Logo Element (original size, positioned at 1/8th vw left, 50vh top) */}
+      <div className="fixed left-[10vw] top-1/2 -translate-y-1/2 z-40 flex flex-col items-center pointer-events-none">
+        <div className="w-64 h-64 rounded-3xl p-6 bg-white shadow-2xl flex items-center justify-center">
+          {shop.logoUrl && !shop.logoUrl.startsWith('content://') ? (
             <img
-              src={shop.bannerUrl}
-              alt={`${shop.name} banner`}
-              className="w-full h-full object-cover rounded-b-3xl"
+              src={shop.logoUrl}
+              alt={`${shop.name} logo`}
+              className="w-full h-full object-cover rounded-2xl"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -91,139 +141,119 @@ export default function DesktopStoreProfileScreen({
               }}
             />
           ) : null}
-          <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-r from-blue-500/90 to-purple-600/90 text-white text-xl font-bold rounded-b-3xl ${shop.bannerUrl ? 'hidden' : ''}`}>
-            {shop.name}
+          <div className={`w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-4xl ${shop.logoUrl && !shop.logoUrl.startsWith('content://') ? 'hidden' : ''}`}>
+            {shop.name.charAt(0)}
           </div>
         </div>
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-          <button
-            onClick={() => router.back()}
-            className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-5 w-5 text-gray-700" />
-          </button>
-          <div className="flex space-x-2">
-            <ShareButton onClick={handleShare} />
-            <FavoriteButton 
-              size={25}
-              isFavorite={isFavorite}
-              toggleFavorite={() => toggleFavorite()}
-            />
-          </div>
-        </div>
-        <div className="absolute bottom-8 left-5 right-5">
-          <div className="flex items-center space-x-4">
-            <div className="w-20 h-20 rounded-3xl p-2 bg-white">
-              {shop.logoUrl && !shop.logoUrl.startsWith('content://') ? (
-                <img
-                  src={shop.logoUrl}
-                  alt={`${shop.name} logo`}
-                  className="w-full h-full object-cover rounded-2xl"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    target.nextElementSibling?.classList.remove('hidden');
-                  }}
-                />
-              ) : null}
-              <div className={`w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-lg ${shop.logoUrl && !shop.logoUrl.startsWith('content://') ? 'hidden' : ''}`}>
-                {shop.name.charAt(0)}
-              </div>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold mb-1 text-white">{shop.name}</h1>
-              <div className="flex items-center space-x-1">
-                <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                <span className="text-lg font-bold text-white">
-                  {shop.rating.toFixed(1)}
-                </span>
-              </div>
-            </div>
+        {/* Store name and rating under logo */}
+        <div className="mt-4 flex flex-col items-center">
+          <h1 className="text-3xl font-bold mb-2 text-gray-900 drop-shadow-lg">{shop.name}</h1>
+          <div className="flex items-center space-x-2">
+            <span className="text-xl font-bold text-yellow-500"><Star className="h-6 w-6 inline-block" /></span>
+            <span className="text-xl font-bold text-gray-800">{shop.rating.toFixed(1)}</span>
           </div>
         </div>
       </div>
-      <div className="max-w-4xl mx-auto px-4 space-y-4">
-        <div className="neu-card-punched rounded-3xl p-5 bg-white">
-          <h2 className="text-xl font-bold mb-3 text-gray-900">Availability</h2>
-          <div className="flex items-center space-x-3">
-            <div className={`w-3 h-3 rounded-full ${storeStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <p className="text-base text-gray-800">
-              <span className="font-semibold">{storeStatus.statusList[0]}</span>
-              {storeStatus.statusList[1] && (
-                <span className="text-gray-600"> - {storeStatus.statusList[1]}</span>
+
+      {/* Scrollable Content Card */}
+      <div className="pt-[50vh] min-h-screen overflow-y-auto scrollbar-hide z-20 relative">
+  <div className="max-w-[calc(50vw-64px)] mx-auto px-8 pb-20 pt-16">
+          <div className="bg-white rounded-t-3xl shadow-2xl">
+            <div className="p-12 space-y-12">
+              {/* Availability Section */}
+              <div className="neu-card-punched rounded-3xl p-8 bg-gray-50">
+                <h2 className="text-3xl font-bold mb-6 text-gray-900">Availability</h2>
+                <div className="flex items-center space-x-6">
+                  <div className={`w-6 h-6 rounded-full ${storeStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <p className="text-xl text-gray-800">
+                    <span className="font-semibold">{storeStatus.statusList[0]}</span>
+                    {storeStatus.statusList[1] && (
+                      <span className="text-gray-600"> - {storeStatus.statusList[1]}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* About Section */}
+              <NeuDescriptionBox>
+                <h2 className="text-3xl font-bold mb-4 text-gray-900">About</h2>
+                <p className="text-xl text-gray-700 leading-8">{shop.description}</p>
+              </NeuDescriptionBox>
+
+              {/* Products Section */}
+              {products.length > 0 && (
+                <NeuInsetBox>
+                  <h2 className="text-3xl font-bold mb-6 text-gray-900">Products</h2>
+                  <div className="flex space-x-6 overflow-x-auto scrollbar-hide">
+                    {products.map((item) => (
+                      <Link href={`/item/${item.id}`} key={`product-${item.id}`}>
+                        <ItemCard item={item} imageUrl={getProductImageUrl(item)} className="w-[calc(1.5*200px)] h-[calc(1.5*300px)]" />
+                      </Link>
+                    ))}
+                  </div>
+                </NeuInsetBox>
               )}
-            </p>
+
+              {/* Services Section */}
+              {services.length > 0 && (
+                <NeuInsetBox>
+                  <h2 className="text-3xl font-bold mb-6 text-gray-900">Services</h2>
+                  <div className="flex space-x-6 overflow-x-auto scrollbar-hide">
+                    {services.map((item) => (
+                      <Link href={`/service/${item.id}`} key={`service-${item.id}`}>
+                        <ServiceCard service={item} imageUrl={getServiceImageUrl(item)} className="w-[calc(1.5*200px)] h-[calc(1.5*300px)]" />
+                      </Link>
+                    ))}
+                  </div>
+                </NeuInsetBox>
+              )}
+
+              {/* Contact Section */}
+              <div className="neu-card-punched rounded-3xl p-8 bg-gray-50">
+                <h2 className="text-3xl font-bold mb-6 text-gray-900">Contact Details</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-6">
+                    <MapPin className="h-9 w-9 text-blue-600" />
+                    <span className="text-xl text-gray-700">
+                      {shop.address || shop.location || '123 Business Street, City'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-6">
+                    <Phone className="h-9 w-9 text-blue-600" />
+                    <span className="text-xl text-gray-700">
+                      {shop.phone || '+1 (555) 123-4567'}
+                    </span>
+                  </div>
+                </div>
+                <button onClick={onContactOwner} className="w-full mt-8 h-16 rounded-2xl bg-blue-600 text-white font-medium flex items-center justify-center space-x-4">
+                  <MessageCircle className="h-9 w-9" />
+                  <span className="text-xl">Contact Store Owner</span>
+                </button>
+              </div>
+
+              {/* Store Management Section */}
+              {user && shop.ownerId === user.id && (
+                <div className="neu-card-punched rounded-3xl p-12 bg-gradient-to-br from-purple-50 to-blue-50">
+                  <h2 className="text-3xl font-bold mb-10 text-gray-900">⚙️ Store Management</h2>
+                  <div className="flex space-x-6">
+                    <Link href={`/store/${storeId}/booking-management`}>
+                      <div className="neu-button-punched w-[calc(1.5*200px)] h-[calc(1.5*300px)] rounded-2xl flex flex-col items-center justify-center space-y-4 bg-white hover:bg-purple-50 transition-colors">
+                        <Calendar className="h-12 w-12 text-purple-600" />
+                        <span className="text-xl font-medium text-purple-700">Booking Management</span>
+                      </div>
+                    </Link>
+                    <Link href={`/store/${storeId}/order-management`}>
+                      <div className="neu-button-punched w-[calc(1.5*200px)] h-[calc(1.5*300px)] rounded-2xl flex flex-col items-center justify-center space-y-4 bg-white hover:bg-blue-50 transition-colors">
+                        <ShoppingCart className="h-12 w-12 text-blue-600" />
+                        <span className="text-xl font-medium text-blue-700">Order Management</span>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        <NeuDescriptionBox>
-          <h2 className="text-xl font-bold mb-2 text-gray-900">About</h2>
-          <p className="text-gray-700 leading-6">{shop.description}</p>
-        </NeuDescriptionBox>
-        {products.length > 0 && (
-          <NeuInsetBox>
-            <h2 className="text-xl font-bold mb-4 text-gray-900">Products</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {products.map((item) => (
-                <Link href={`/item/${item.id}`} key={`product-${item.id}`}>
-                  <ItemCard item={item} imageUrl={getProductImageUrl(item)} />
-                </Link>
-              ))}
-            </div>
-          </NeuInsetBox>
-        )}
-        {services.length > 0 && (
-          <NeuInsetBox>
-            <h2 className="text-xl font-bold mb-4 text-gray-900">Services</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {services.map((item) => (
-                <Link href={`/service/${item.id}`} key={`service-${item.id}`}>
-                  <ServiceCard service={item} imageUrl={getServiceImageUrl(item)} />
-                </Link>
-              ))}
-            </div>
-          </NeuInsetBox>
-        )}
-        <div className="neu-card-punched rounded-3xl p-5 bg-white">
-          <h2 className="text-xl font-bold mb-3 text-gray-900">Contact Details</h2>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-3">
-              <MapPin className="h-5 w-5 text-blue-600" />
-              <span className="text-gray-700 text-base">
-                {shop.address || shop.location || '123 Business Street, City'}
-              </span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Phone className="h-5 w-5 text-blue-600" />
-              <span className="text-gray-700 text-base">
-                {shop.phone || '+1 (555) 123-4567'}
-              </span>
-            </div>
-          </div>
-          <button className="w-full mt-4 h-12 rounded-2xl bg-blue-600 text-white font-medium flex items-center justify-center space-x-2">
-            <span>Contact Store Owner</span>
-          </button>
-        </div>
-        {user && shop.ownerId === user.id && (
-          <div className="neu-card-punched rounded-3xl p-6 bg-gradient-to-br from-purple-50 to-blue-50">
-            <h2 className="text-xl font-bold mb-5 text-gray-900">⚙️ Store Management</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link href={`/store/${storeId}/booking-management`}>
-                <div className="neu-button-punched h-24 rounded-2xl flex flex-col items-center justify-center space-y-2 bg-white hover:bg-purple-50 transition-colors">
-                  <Calendar className="h-6 w-6 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-700">Booking Management</span>
-                </div>
-              </Link>
-              <Link href={`/store/${storeId}/order-management`}>
-                <div className="neu-button-punched h-24 rounded-2xl flex flex-col items-center justify-center space-y-2 bg-white hover:bg-blue-50 transition-colors">
-                  <ShoppingCart className="h-6 w-6 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-700">Order Management</span>
-                </div>
-              </Link>
-            </div>
-          </div>
-        )}
-        <div className="h-6"></div>
       </div>
     </div>
   );

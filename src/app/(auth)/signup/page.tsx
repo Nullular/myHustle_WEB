@@ -8,8 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-import { NeuButton, NeuSwitch } from '@/components/ui';
-import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
+import { NeuButton, NeuCard, NeuSwitch } from '@/components/ui';
 import { AuthService } from '@/lib/firebase/auth';
 import { useAuthStore } from '@/lib/store/auth';
 import { SignUpForm, UserType } from '@/types';
@@ -97,7 +96,7 @@ export default function SignUpPage() {
         </div>
 
         {/* SignUp Form Card */}
-        <NeuDescriptionBox>
+        <NeuCard className="p-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Error Message */}
             {error && (
@@ -114,7 +113,8 @@ export default function SignUpPage() {
               <input
                 type="text"
                 placeholder="Full Name"
-                className="neu-input pl-12 w-full"
+                className="neu-input pl-16 w-full"
+                style={{ paddingLeft: '4.5rem' }}
                 {...register('displayName')}
                 onChange={handleInputChange}
               />
@@ -131,7 +131,8 @@ export default function SignUpPage() {
               <input
                 type="email"
                 placeholder="Email address"
-                className="neu-input pl-12 w-full"
+                className="neu-input pl-16 w-full"
+                style={{ paddingLeft: '4.5rem' }}
                 {...register('email')}
                 onChange={handleInputChange}
               />
@@ -148,7 +149,8 @@ export default function SignUpPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Password"
-                className="neu-input pl-12 pr-12 w-full"
+                className="neu-input pl-16 pr-16 w-full"
+                style={{ paddingLeft: '4.5rem', paddingRight: '4.5rem' }}
                 {...register('password')}
                 onChange={handleInputChange}
               />
@@ -172,7 +174,8 @@ export default function SignUpPage() {
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="Confirm Password"
-                className="neu-input pl-12 pr-12 w-full"
+                className="neu-input pl-16 pr-16 w-full"
+                style={{ paddingLeft: '4.5rem', paddingRight: '4.5rem' }}
                 {...register('confirmPassword')}
                 onChange={handleInputChange}
               />
@@ -251,7 +254,7 @@ export default function SignUpPage() {
               </p>
             </div>
           </form>
-        </NeuDescriptionBox>
+        </NeuCard>
       </div>
     </div>
   );

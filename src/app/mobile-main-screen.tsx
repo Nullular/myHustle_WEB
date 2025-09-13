@@ -120,13 +120,13 @@ export default function MobileMainScreen({
       <main className="p-4">
         {/* Search Bar */}
         <div className="relative mb-4">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10 pointer-events-none" />
           <input
             type="text"
             placeholder="Search shops..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="neu-input w-full pl-12 pr-4 py-3 text-base rounded-lg"
+            className="neu-input w-full pl-16 pr-4 py-3 text-base rounded-lg text-center placeholder:text-center"
           />
         </div>
 
@@ -175,12 +175,12 @@ export default function MobileMainScreen({
                   </div>
                 </div>
                 <div className="p-3">
-                  <h3 className="font-bold text-md">{shop.name}</h3>
+                  <h3 className="font-bold text-md text-gray-900">{shop.name}</h3>
                   <p className="text-xs text-gray-600 truncate">{shop.description}</p>
                   <div className="flex justify-between items-center mt-2">
                     <div className="flex items-center neu-pressed px-2 py-1 rounded-md">
                       <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                      <span className="ml-1 text-xs font-bold">{shop.rating.toFixed(1)}</span>
+                      <span className="ml-1 text-xs font-bold text-gray-800">{shop.rating.toFixed(1)}</span>
                     </div>
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${isShopOpen(shop) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       {isShopOpen(shop) ? 'Open' : 'Closed'}

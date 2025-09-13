@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { Upload, X, Crop } from 'lucide-react';
 import ReactCrop, { Crop as CropType, PixelCrop } from 'react-image-crop';
@@ -30,19 +30,6 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
   const [isReplacing, setIsReplacing] = useState(false);
   const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
-  
-  // Handle clicking on existing image to replace it
-  const handleImageEditClick = useCallback((index: number) => {
-    setIsReplacing(true);
-    setReplacingIndex(index);
-    fileInputRef.current?.click();
-  }, []);
-
-  // Reset replacing state
-  const resetReplacingState = useCallback(() => {
-    setIsReplacing(false);
-    setReplacingIndex(null);
-  }, []);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [crop, setCrop] = useState<CropType>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -50,6 +37,7 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropContainerRef = useRef<HTMLDivElement>(null);
+  const inputId = useId();
 
   // Fixed aspect ratio for square crops, keep resizable but not reshapeable
   const aspectRatio = 1;
@@ -73,6 +61,12 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       const files = Array.from(e.target.files);
       processNextFile(files, 0);
     }
+  }, []);
+
+  const handleImageEditClick = useCallback((index: number) => {
+    setIsReplacing(true);
+    setReplacingIndex(index);
+    fileInputRef.current?.click();
   }, []);
 
   const processNextFile = useCallback((files: File[], index: number) => {
@@ -165,32 +159,29 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       throw new Error('No 2d context');
     }
 
-    // Simple mathematical crop - use crop coordinates directly from react-image-crop
-    // The crop coordinates are already converted to pixels in the calling function
-    canvas.width = crop.width;
-    canvas.height = crop.height;
+    // Simple mathematical crop: clamp pixel crop within the natural image bounds
+    const sx = Math.max(0, Math.min(Math.floor(crop.x), image.naturalWidth - 1));
+    const sy = Math.max(0, Math.min(Math.floor(crop.y), image.naturalHeight - 1));
+    const sWidth = Math.max(1, Math.min(Math.floor(crop.width), image.naturalWidth - sx));
+    const sHeight = Math.max(1, Math.min(Math.floor(crop.height), image.naturalHeight - sy));
 
-    console.log('🎯 Mathematical crop (no zoom calculations):', {
-      imageNaturalSize: { width: image.naturalWidth, height: image.naturalHeight },
-      cropPixels: crop,
-      outputCanvas: { width: canvas.width, height: canvas.height }
-    });
+    canvas.width = sWidth;
+    canvas.height = sHeight;
 
-    // Fill with white background to prevent transparency issues
+    // Fill white to avoid black/transparent areas in JPEGs
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Direct crop from natural image using the pixel coordinates
     ctx.drawImage(
       image,
-      crop.x,      // source x coordinate
-      crop.y,      // source y coordinate
-      crop.width,  // source width
-      crop.height, // source height
-      0,           // destination x
-      0,           // destination y
-      crop.width,  // destination width
-      crop.height  // destination height
+      sx,
+      sy,
+      sWidth,
+      sHeight,
+      0,
+      0,
+      sWidth,
+      sHeight
     );
 
     return new Promise((resolve) => {
@@ -206,7 +197,7 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
         0.9
       );
     });
-  }, [zoom]);
+  }, []);
 
   const handleCropConfirm = useCallback(async () => {
     if (!crop || !imgRef.current || !imageToCrop) {
@@ -235,7 +226,7 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       );
 
       // For single image uploads (like logos), delete existing images first
-      if (maxImages === 1 && images.length > 0) {
+      if (maxImages === 1 && images.length > 0 && !isReplacing) {
         console.log('🔄 Replacing existing image...');
         for (const oldImageUrl of images) {
           try {
@@ -258,14 +249,23 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
       const downloadURL = await imageUploadService.uploadImage(croppedFile, finalUploadPath);
       console.log('✅ Upload successful, URL:', downloadURL);
 
-      // Update images array
+      // Update images array (replace targeted index when editing, else replace for single or append)
       let newImages: string[];
       if (isReplacing && replacingIndex !== null) {
-        // Replace the specific image
         newImages = [...images];
+        const oldUrl = newImages[replacingIndex];
         newImages[replacingIndex] = downloadURL;
+        // Try deleting the replaced image from storage (best-effort)
+        try {
+          await imageUploadService.deleteImage(oldUrl);
+        } catch (deleteError: any) {
+          if (deleteError?.code === 'storage/object-not-found') {
+            console.warn('ℹ️ Replaced image already deleted or not found');
+          } else {
+            console.warn('⚠️ Could not delete replaced image:', deleteError.message);
+          }
+        }
       } else {
-        // Add new image (existing logic)
         newImages = maxImages === 1 ? [downloadURL] : [...images, downloadURL];
       }
       
@@ -274,9 +274,10 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
         console.log('✅ Images state updated successfully');
       }
 
-      // Reset crop modal state and replacing state
-      handleCropCancel();
-      resetReplacingState();
+  // Reset crop modal state and replacing state
+  handleCropCancel();
+  setIsReplacing(false);
+  setReplacingIndex(null);
       
     } catch (error) {
       console.error('❌ Error uploading image:', error);
@@ -299,8 +300,9 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
     setCurrentImageIndex(null);
     setCrop(undefined);
     setCompletedCrop(undefined);
-    resetReplacingState(); // Reset replacing state when canceling
-  }, [imageToCrop, resetReplacingState]);
+    setIsReplacing(false);
+    setReplacingIndex(null);
+  }, [imageToCrop]);
 
   const removeImage = async (index: number) => {
     try {
@@ -376,23 +378,27 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
               <img
                 src={imageUrl}
                 alt={`Uploaded ${index + 1}`}
-                className="w-full h-full object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                className="w-full h-full object-cover rounded-lg border border-gray-200 cursor-pointer"
                 onClick={() => handleImageEditClick(index)}
-                title="Click to replace this image"
+                title="Edit image"
               />
               <button
                 type="button"
                 onClick={() => removeImage(index)}
                 aria-label={`Remove image ${index + 1}`}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
               >
                 <X className="w-3 h-3" />
               </button>
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white bg-opacity-90 rounded-full p-2">
-                  <span className="text-xs text-gray-700 font-medium">Click to edit</span>
-                </div>
-              </div>
+              <label
+                htmlFor={inputId}
+                onMouseDown={() => handleImageEditClick(index)}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute bottom-1 left-1 px-2 py-1 text-[10px] sm:text-xs font-medium rounded-md bg-white/90 text-gray-800 shadow hover:bg-white cursor-pointer z-10"
+                aria-label={`Edit image ${index + 1}`}
+              >
+                Edit
+              </label>
             </div>
           ))}
           
@@ -453,21 +459,11 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
                     ref={imgRef}
                     alt="Crop preview"
                     src={imageToCrop}
-                    className="crop-preview-image crop-zoom-scale"
+                    className="crop-preview-image"
                     onLoad={onImageLoad}
-                    {...({ style: zoomStyle } as any)}
+                    
                   />
                 </ReactCrop>
-              </div>
-              
-              {/* Zoom Indicator */}
-              <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                Zoom: {Math.round(zoom * 100)}%
-              </div>
-              
-              {/* Zoom Instructions */}
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                Mouse wheel or pinch to zoom
               </div>
               
               {/* Loading Overlay */}
@@ -522,6 +518,7 @@ export const ImageUploadWithCrop: React.FC<ImageUploadWithCropProps> = ({
         accept="image/*"
         multiple={maxImages > 1}
         className="hidden"
+        id={inputId}
         aria-label="Upload images"
       />
     </div>

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import FavoriteButton from '@/components/ui/FavoriteButton';
 import { 
   Search, 
@@ -68,18 +69,17 @@ export default function DesktopMainScreen({
             </div>
 
             {/* Navigation - Hidden on mobile, shown on desktop */}
-            <nav className="hidden lg:flex space-x-6">
+            <nav className="hidden lg:flex space-x-6 items-center relative">
               <Link href="/" className="neu-hover-button text-sm">
                 Home
               </Link>
-              <Link href="/stores" className="neu-hover-button text-sm">
-                Browse
-              </Link>
-              <Link href="/neumorphic-showcase" className="neu-hover-button text-sm">
-                Components
-              </Link>
+              {/* Browse becomes an info button on desktop that shows a transient bubble */}
+              <BrowseInfo />
               <Link href="/about" className="neu-hover-button text-sm">
                 About
+              </Link>
+              <Link href="/my-stores" className="neu-hover-button text-sm">
+                My Store
               </Link>
             </nav>
 
@@ -131,18 +131,14 @@ export default function DesktopMainScreen({
                           Messages
                         </Link>
 
-                        {user.userType === 'BUSINESS_OWNER' && (
-                          <>
-                            <Link href="/my-stores" className="neu-hover-button w-full justify-start mb-1">
-                              <Store className="h-4 w-4 mr-3" />
-                              My Stores
-                            </Link>
-                            <Link href="/create-store" className="neu-hover-button w-full justify-start mb-1">
-                              <Plus className="h-4 w-4 mr-3" />
-                              Create Store
-                            </Link>
-                          </>
-                        )}
+                        <Link href="/my-stores" className="neu-hover-button w-full justify-start mb-1">
+                          <Store className="h-4 w-4 mr-3" />
+                          My Stores
+                        </Link>
+                        <Link href="/create-store" className="neu-hover-button w-full justify-start mb-1">
+                          <Plus className="h-4 w-4 mr-3" />
+                          Create Store
+                        </Link>
 
                         <button
                           onClick={handleSignOut}
@@ -187,13 +183,13 @@ export default function DesktopMainScreen({
                 placeholder="Search shops and services..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="neu-input w-full pl-12 pr-4 py-4 text-base rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="neu-input w-full pl-16 pr-4 py-4 text-base rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-center placeholder:text-center"
               />
             </div>
           </div>
 
           {/* SLEEK FILTER CHIPS - HORIZONTAL SCROLL ON MOBILE */}
-          <div className="flex items-center space-x-3 overflow-x-auto pt-2 pb-4 scrollbar-hide">
+          <div className="flex items-center space-x-3 overflow-x-auto lg:overflow-x-auto pt-2 pb-4 scrollbar-hide flex-nowrap">
             <div className="flex-shrink-0 w-5 flex justify-center">
               <Filter className="h-5 w-5 text-gray-400" />
             </div>
@@ -342,6 +338,44 @@ export default function DesktopMainScreen({
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+// Small helper component: shows a transient bubble when clicked
+function BrowseInfo() {
+  const [visible, setVisible] = useState(false);
+
+  const handleClick = () => {
+    setVisible(true);
+    setTimeout(() => setVisible(false), 2500);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={handleClick}
+        className="neu-hover-button text-sm"
+        aria-label="Polling info"
+        title="Polling info"
+      >
+        Browse
+      </button>
+
+      <AnimatePresence>
+        {visible && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            transition={{ duration: 0.2 }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-max max-w-xs bg-gray-800 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg z-50"
+          >
+            Polling is open for contents
+            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800"></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

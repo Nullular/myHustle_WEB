@@ -46,7 +46,7 @@ export function CartItemCard({ item }: CartItemCardProps) {
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-800 truncate">{item.name}</h3>
             <p className="text-sm text-gray-600">{item.shopName || 'Store'}</p>
-            <p className="text-lg font-bold text-purple-600">${item.price.toFixed(2)}</p>
+            <p className="text-lg font-bold text-gray-900">R{item.price.toFixed(2)}</p>
           </div>
 
           {/* Remove Button - always on the right */}

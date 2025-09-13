@@ -11,6 +11,7 @@ import MobileStoreProfileScreen from './mobile-store-profile';
 import { NeuButton } from '@/components/ui';
 import { Product, Service } from '@/types';
 import Loader from '@/components/ui/Loader';
+import { messagingRepository } from '@/lib/firebase/repositories/messagingRepository';
 
 interface StoreProfilePageProps {
   params: Promise<{ id: string }>;
@@ -96,6 +97,43 @@ export default function StoreProfilePage({ params }: StoreProfilePageProps) {
     }
   };
 
+  // Start or navigate to a chat with the store owner
+  const handleContactOwner = async () => {
+    try {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      if (!shop) return;
+
+      const ownerId = shop.ownerId;
+      if (!ownerId) return;
+
+      // Build conversation payload without problematic initial message
+      const conversationId = await messagingRepository.createConversation({
+        participants: [user.id, ownerId],
+        participantNames: {
+          [user.id]: user.displayName || user.email || 'User',
+          [ownerId]: shop.name || 'Store Owner',
+        },
+        participantEmails: {
+          [user.id]: user.email || '',
+          [ownerId]: shop.email || '',
+        },
+        initialMessage: '', // Empty string to avoid the validation error
+        businessContext: {
+          shopId: shop.id,
+          shopName: shop.name,
+        },
+      });
+
+      // Navigate to chat - the initial message can be sent from the chat screen
+      router.push(`/chat/${conversationId}?participantId=${ownerId}&participantName=${encodeURIComponent(shop.name)}`);
+    } catch (e) {
+      console.error('❌ Failed to start chat:', e);
+    }
+  };
+
   if (!storeId || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -129,6 +167,7 @@ export default function StoreProfilePage({ params }: StoreProfilePageProps) {
     storeId,
     getProductImageUrl,
     getServiceImageUrl,
+    onContactOwner: handleContactOwner,
   };
 
   return isMobile ? <MobileStoreProfileScreen {...screenProps} /> : <DesktopStoreProfileScreen {...screenProps} />;

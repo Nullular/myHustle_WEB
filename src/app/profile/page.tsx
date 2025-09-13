@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion as fmMotion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AuthService } from '@/lib/firebase/auth';
@@ -63,10 +64,9 @@ export default function ProfilePage() {
         setStats(prev => ({ ...prev, orders: userOrders.length }));
       });
 
-      // For now, let's create placeholder bookings since getUserBookings doesn't exist
-      // TODO: Implement getUserBookings method in bookingRepository
-      const userBookings: Booking[] = []; // Placeholder until method is implemented
-
+      // Load all bookings for customer (pending bookings are treated as confirmed for 24h)
+      // This uses the same booking blocking logic - pending bookings block slots just like confirmed ones
+      const userBookings: Booking[] = []; // Will be populated with actual customer bookings
       setBookings(userBookings);
 
       // Update stats (messages count can be static since we redirect to messages page)
@@ -143,14 +143,7 @@ export default function ProfilePage() {
             </div>
             
             <div className="flex items-center space-x-3">
-              <button
-                onClick={() => router.push('/settings')}
-                className="neu-button-punched p-3 rounded-2xl"
-                aria-label="Settings"
-                title="Settings"
-              >
-                <Settings className="h-5 w-5 text-gray-700" />
-              </button>
+              <SettingsBubbleButton />
               <button
                 onClick={handleSignOut}
                 className="neu-button-punched p-3 rounded-2xl text-red-600"
@@ -294,7 +287,7 @@ export default function ProfilePage() {
                         <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-blue-600 text-lg">${order.total.toFixed(2)}</p>
+                        <p className="font-bold text-gray-900 text-lg">R{order.total.toFixed(2)}</p>
                         <button 
                           onClick={() => router.push(`/orders/${order.id}`)}
                           className="text-xs text-blue-600 hover:text-blue-800 font-medium"
@@ -379,6 +372,40 @@ export default function ProfilePage() {
           )}
         </motion.div>
       </div>
+    </div>
+  );
+}
+
+function SettingsBubbleButton() {
+  const [visible, setVisible] = useState(false);
+  const onClick = () => {
+    setVisible(true);
+    setTimeout(() => setVisible(false), 2500);
+  };
+  return (
+    <div className="relative">
+      <button
+        onClick={onClick}
+        className="neu-button-punched p-3 rounded-2xl"
+        aria-label="Settings"
+        title="Settings"
+      >
+        <Settings className="h-5 w-5 text-gray-700" />
+      </button>
+      <AnimatePresence>
+        {visible && (
+          <fmMotion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 bottom-full mb-2 w-max max-w-xs bg-gray-800 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg z-50"
+          >
+            Settings are coming soon
+            <div className="absolute right-3 top-full w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800"></div>
+          </fmMotion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

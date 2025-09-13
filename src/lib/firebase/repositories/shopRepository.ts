@@ -55,15 +55,25 @@ class FirebaseShopRepository {
         try {
           const data = document.data();
           const shop: Shop = {
-            id: document.id,
             ...data,
+            // Always use Firestore document ID (override any invalid id field in data)
+            id: document.id,
+            // Convert Android content:// URLs to web-compatible fallbacks
+            logoUrl: data.logoUrl?.startsWith('content://') ? '/file.svg' : (data.logoUrl || '/file.svg'),
+            bannerUrl: data.bannerUrl?.startsWith('content://') ? '/file.svg' : (data.bannerUrl || '/file.svg'),
+            coverImageUrl: data.coverImageUrl?.startsWith('content://') ? '/file.svg' : (data.coverImageUrl || '/file.svg'),
             // Convert Firestore Timestamps to Dates
             created_at: data.created_at?.toDate() || new Date(),
             updated_at: data.updated_at?.toDate() || new Date(),
           } as Shop;
           
-          console.log(`✅ Successfully parsed active shop: ${shop.name}`);
-          shops.push(shop);
+          // Validate shop has minimum required data for web display
+          if (shop.name && shop.name.trim() !== '') {
+            console.log(`✅ Successfully parsed active shop: ${shop.name} (ID: ${shop.id})`);
+            shops.push(shop);
+          } else {
+            console.warn(`⚠️ Skipping shop with missing name: ${document.id}`);
+          }
         } catch (e) {
           console.error(`❌ Failed to parse shop document ${document.id}`, e);
           // Skip invalid documents like Android does
@@ -74,6 +84,45 @@ class FirebaseShopRepository {
       return shops;
     } catch (error) {
       console.error('❌ FirebaseShopRepository: Error fetching active shops:', error);
+      return [];
+    }
+  }
+
+  /**
+   * DEBUG: Get ALL shops regardless of active status (for debugging missing shops)
+   */
+  async getAllShopsDebug(): Promise<Shop[]> {
+    try {
+      console.log('🔍 DEBUG: Fetching ALL shops from Firestore (including inactive)');
+      
+      const snapshot = await getDocs(collection(db, 'shops'));
+      console.log(`🔍 DEBUG: Found ${snapshot.docs.length} total shop documents`);
+      
+      const shops: Shop[] = [];
+      snapshot.docs.forEach((document) => {
+        try {
+          const data = document.data();
+          const shop: Shop = {
+            id: document.id,
+            ...data,
+            created_at: data.created_at?.toDate() || new Date(),
+            updated_at: data.updated_at?.toDate() || new Date(),
+          } as Shop;
+          
+          console.log(`🔍 DEBUG: Shop "${shop.name}" - Active: ${shop.active}, ID: ${shop.id}`);
+          shops.push(shop);
+        } catch (e) {
+          console.error(`❌ DEBUG: Failed to parse shop document ${document.id}`, e);
+        }
+      });
+      
+      console.log(`🔍 DEBUG: Total shops found: ${shops.length}`);
+      console.log(`🔍 DEBUG: Active shops: ${shops.filter(s => s.active).length}`);
+      console.log(`🔍 DEBUG: Inactive shops: ${shops.filter(s => !s.active).length}`);
+      
+      return shops;
+    } catch (error) {
+      console.error('❌ DEBUG: Error fetching all shops:', error);
       return [];
     }
   }
@@ -104,14 +153,24 @@ class FirebaseShopRepository {
           try {
             const data = document.data();
             const shop: Shop = {
-              id: document.id,
               ...data,
+              // Always use Firestore document ID (override any invalid id field in data)
+              id: document.id,
+              // Convert Android content:// URLs to web-compatible fallbacks
+              logoUrl: data.logoUrl?.startsWith('content://') ? '/file.svg' : (data.logoUrl || '/file.svg'),
+              bannerUrl: data.bannerUrl?.startsWith('content://') ? '/file.svg' : (data.bannerUrl || '/file.svg'),
+              coverImageUrl: data.coverImageUrl?.startsWith('content://') ? '/file.svg' : (data.coverImageUrl || '/file.svg'),
               created_at: data.created_at?.toDate() || new Date(),
               updated_at: data.updated_at?.toDate() || new Date(),
             } as Shop;
             
-            console.log(`✅ Successfully parsed active shop in listener: ${shop.name}`);
-            shops.push(shop);
+            // Validate shop has minimum required data for web display
+            if (shop.name && shop.name.trim() !== '') {
+              console.log(`✅ Successfully parsed active shop in listener: ${shop.name} (ID: ${shop.id})`);
+              shops.push(shop);
+            } else {
+              console.warn(`⚠️ Skipping shop with missing name in listener: ${document.id}`);
+            }
           } catch (e) {
             console.error(`❌ Failed to parse shop document ${document.id} in listener`, e);
             // Skip invalid documents

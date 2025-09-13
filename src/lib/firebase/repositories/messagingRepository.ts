@@ -177,8 +177,9 @@ class MessagingRepository {
       if (existingConversation) {
         console.log('✅ Using existing conversation:', existingConversation.id);
         
-        // Send the initial message to existing conversation
-        if (conversationData.initialMessage) {
+        // Send the initial message to existing conversation if provided and not empty
+        if (conversationData.initialMessage && conversationData.initialMessage.trim() !== '') {
+          console.log('📤 Sending initial message to existing conversation:', existingConversation.id);
           await this.sendMessage({
             conversationId: existingConversation.id,
             senderId: conversationData.participants[0], // Assume first participant is sender
@@ -243,8 +244,9 @@ class MessagingRepository {
       console.log('🔍 Conversation ID type:', typeof conversationId);
       console.log('🔍 Conversation ID length:', conversationId?.length);
       
-      // Send initial message if provided
-      if (conversationData.initialMessage) {
+      // Send initial message if provided and not empty
+      if (conversationData.initialMessage && conversationData.initialMessage.trim() !== '') {
+        console.log('📤 Sending initial message to conversation:', conversationId);
         await this.sendMessage({
           conversationId: conversationId,
           senderId: conversationData.participants[0],

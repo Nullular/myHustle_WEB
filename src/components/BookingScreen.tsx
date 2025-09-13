@@ -228,10 +228,12 @@ export default function BookingScreen({
       // Find bookings for this date (EXACT same filtering logic)
       const dayBookings = confirmedBookings.filter(booking => booking.requestedDate === dateStr);
       
-      // Check if any booking is ACCEPTED (blocking the date)
-      const hasAcceptedBooking = dayBookings.some(booking => booking.status === BookingStatus.ACCEPTED);
+      // Check if any booking is ACCEPTED or PENDING (both block slots - pending acts as confirmed for 24h)
+      const hasBookingBlockingSlot = dayBookings.some(booking => 
+        booking.status === BookingStatus.ACCEPTED || booking.status === BookingStatus.PENDING
+      );
       
-      if (hasAcceptedBooking) {
+      if (hasBookingBlockingSlot) {
         blockedDates.push(date);
       }
     }
@@ -263,10 +265,10 @@ export default function BookingScreen({
     
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split('T')[0]; // EXACT same format as store calendar
-      const hasAcceptedBooking = confirmedBookings.some(booking => 
-        booking.requestedDate === dateStr && booking.status === BookingStatus.ACCEPTED
+      const hasBookingBlockingSlot = confirmedBookings.some(booking => 
+        booking.requestedDate === dateStr && (booking.status === BookingStatus.ACCEPTED || booking.status === BookingStatus.PENDING)
       );
-      if (hasAcceptedBooking) return false;
+      if (hasBookingBlockingSlot) return false;
     }
     
     return true;

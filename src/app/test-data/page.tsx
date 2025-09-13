@@ -246,6 +246,54 @@ export default function DataConnectionTest() {
     }
   };
 
+  const debugAllShops = async () => {
+    setLoading(true);
+    setTestResults({});
+    
+    try {
+      await runTest('Debug All Shops (Including Inactive)', async () => {
+        const allShops = await shopRepository.getAllShopsDebug();
+        const activeShops = allShops.filter(shop => shop.active);
+        const inactiveShops = allShops.filter(shop => !shop.active);
+        
+        console.log('🔍 SHOP DEBUG RESULTS:');
+        console.log(`📊 Total shops: ${allShops.length}`);
+        console.log(`✅ Active shops: ${activeShops.length}`);
+        console.log(`❌ Inactive shops: ${inactiveShops.length}`);
+        
+        // Look for Lucy Juicy specifically
+        const lucyJuicy = allShops.find(shop => 
+          shop.name?.toLowerCase().includes('lucy') || 
+          shop.name?.toLowerCase().includes('juicy')
+        );
+        
+        if (lucyJuicy) {
+          console.log('🎯 FOUND LUCY JUICY:', {
+            name: lucyJuicy.name,
+            id: lucyJuicy.id,
+            active: lucyJuicy.active,
+            ownerId: lucyJuicy.ownerId
+          });
+        } else {
+          console.log('⚠️ Lucy Juicy NOT FOUND in database');
+        }
+        
+        return {
+          totalShops: allShops.length,
+          activeShops: activeShops.length,
+          inactiveShops: inactiveShops.length,
+          lucyJuicyFound: !!lucyJuicy,
+          lucyJuicyDetails: lucyJuicy || null,
+          allShopNames: allShops.map(s => ({ name: s.name, active: s.active, id: s.id }))
+        };
+      });
+    } catch (error) {
+      console.error('Error debugging shops:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearResults = () => {
     setTestResults({});
   };  return (
@@ -264,6 +312,14 @@ export default function DataConnectionTest() {
               className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50"
             >
               {loading ? '🔄 Running Tests...' : '🚀 Run All Tests'}
+            </button>
+            
+            <button
+              onClick={debugAllShops}
+              disabled={loading}
+              className="px-6 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 disabled:opacity-50"
+            >
+              {loading ? '🔄 Debugging...' : '🔍 Debug All Shops'}
             </button>
             
             <button

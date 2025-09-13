@@ -18,6 +18,7 @@ import { useAuthStore } from '@/lib/store/auth';
 import { useShop } from '@/hooks/useShops';
 import { serviceRepository } from '@/lib/firebase/repositories';
 import { Service } from '@/types/models';
+import { SERVICE_CATEGORIES } from '@/lib/data/categories';
 
 export default function EditServicePage() {
   const params = useParams();
@@ -51,13 +52,6 @@ export default function EditServicePage() {
   const [newTag, setNewTag] = useState('');
   const [newRequirement, setNewRequirement] = useState('');
   const [newInclude, setNewInclude] = useState('');
-
-  const categories = [
-    'Consultation', 'Repair', 'Installation', 'Maintenance', 
-    'Cleaning', 'Beauty & Wellness', 'Fitness', 'Education',
-    'Legal', 'Financial', 'Marketing', 'Design', 'Photography',
-    'Event Planning', 'Transportation', 'Healthcare', 'Other'
-  ];
 
   const currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'];
 
@@ -351,7 +345,7 @@ export default function EditServicePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   title="Select service category"
                 >
-                  {categories.map(cat => (
+                  {SERVICE_CATEGORIES.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>

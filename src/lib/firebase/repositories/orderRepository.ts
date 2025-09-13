@@ -1,4 +1,4 @@
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, getDoc, Timestamp, setDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
 import { Order, OrderStatus } from '@/types/order';
@@ -225,7 +225,7 @@ export class OrderRepository {
         updatedAt: Timestamp.now(),
       };
 
-      await updateDoc(newOrderRef, finalOrderData);
+  await setDoc(newOrderRef, finalOrderData);
       return newOrderRef.id;
     } catch (error) {
       console.error('❌ Error creating order:', error);

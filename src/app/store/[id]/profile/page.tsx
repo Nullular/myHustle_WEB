@@ -15,6 +15,7 @@ import { useAuthStore } from '@/lib/store/auth';
 import { useShop } from '@/hooks/useShops';
 import { shopRepository } from '@/lib/firebase/repositories';
 import { Shop } from '@/types/models';
+import { BUSINESS_CATEGORIES } from '@/lib/data/categories';
 
 export default function StoreProfilePage() {
   const params = useParams();
@@ -26,7 +27,7 @@ export default function StoreProfilePage() {
   // Form state
   const [storeName, setStoreName] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Electronics');
+  const [selectedCategory, setSelectedCategory] = useState<(typeof BUSINESS_CATEGORIES)[number]>(BUSINESS_CATEGORIES[0]);
   const [location, setLocation] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -46,11 +47,7 @@ export default function StoreProfilePage() {
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  const categories = [
-    'Electronics', 'Clothing', 'Home & Garden', 'Sports', 
-    'Beauty', 'Books', 'Toys', 'Food & Beverages', 'Other'
-  ];
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -62,7 +59,11 @@ export default function StoreProfilePage() {
     if (shop && isOwner) {
       setStoreName(shop.name);
       setDescription(shop.description);
-      setSelectedCategory(shop.category);
+      // Ensure category is one of BUSINESS_CATEGORIES
+      const validCategory = (BUSINESS_CATEGORIES as readonly string[]).includes(shop.category)
+        ? (shop.category as (typeof BUSINESS_CATEGORIES)[number])
+        : BUSINESS_CATEGORIES[0];
+      setSelectedCategory(validCategory);
       setLocation(shop.location);
       setAddress(shop.address);
       setPhoneNumber(shop.phone);
@@ -98,13 +99,19 @@ export default function StoreProfilePage() {
   }, [shop, isOwner]);
 
   const isFormValid = () => {
-    return storeName.trim() !== '' &&
+    const basicValid = storeName.trim() !== '' &&
            description.trim() !== '' &&
            location.trim() !== '' &&
            address.trim() !== '' &&
            city.trim() !== '' &&
            state.trim() !== '' &&
            phoneNumber.trim() !== '';
+
+    const categoryValid = BUSINESS_CATEGORIES.includes(selectedCategory);
+    const hasLogo = (logoImages[0] || '').trim() !== '';
+    const hasBanner = (bannerImages[0] || '').trim() !== '';
+
+    return basicValid && categoryValid && hasLogo && hasBanner;
   };
 
   const handleDayToggle = (day: string) => {
@@ -120,8 +127,24 @@ export default function StoreProfilePage() {
     console.log('📝 Form validation:', isFormValid());
     console.log('👤 Current user:', user?.email);
     
-    if (!isFormValid() || !user || !shop) {
-      console.log('❌ Form invalid, no user, or no shop');
+    if (!user || !shop) {
+      console.log('❌ No user, or no shop');
+      return;
+    }
+
+    // Validate required fields with explicit messaging
+    const errors: string[] = [];
+    if (!BUSINESS_CATEGORIES.includes(selectedCategory)) errors.push('Please select a valid category.');
+    if (!(logoImages[0] || '').trim()) errors.push('Please upload a store logo.');
+    if (!(bannerImages[0] || '').trim()) errors.push('Please upload a store banner.');
+    if (!isFormValid()) {
+      // If basic fields are missing, rely on disabled button plus generic message
+      if (errors.length === 0) errors.push('Please complete all required fields.');
+    }
+    if (errors.length > 0) {
+      setValidationError(errors.join(' '));
+      setTimeout(() => setValidationError(null), 4000);
+      console.log('❌ Validation errors:', errors);
       return;
     }
 
@@ -342,11 +365,11 @@ export default function StoreProfilePage() {
                 </label>
                 <select
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => setSelectedCategory(e.target.value as (typeof BUSINESS_CATEGORIES)[number])}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   title="Select store category"
                 >
-                  {categories.map(category => (
+                  {BUSINESS_CATEGORIES.map(category => (
                     <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
@@ -515,6 +538,15 @@ export default function StoreProfilePage() {
               </div>
             </div>
           </NeuCard>
+
+          {/* Validation error */}
+          {validationError && (
+            <div className="px-4">
+              <div className="mb-4 text-sm text-red-700 bg-red-100 border border-red-200 rounded-lg p-3">
+                {validationError}
+              </div>
+            </div>
+          )}
 
           {/* Save Button */}
           <div className="flex justify-end space-x-4 pt-6">

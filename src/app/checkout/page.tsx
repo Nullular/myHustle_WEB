@@ -25,7 +25,7 @@ export default function CheckoutPage() {
 
   // Calculate order totals
   const subtotal = totalAmount;
-  const deliveryFee = 2.99;
+  const deliveryFee = 30.0;
   const total = subtotal + deliveryFee;
 
   const handleCheckout = async () => {
@@ -129,18 +129,18 @@ export default function CheckoutPage() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Items</span>
-              <span className="font-medium">${subtotal.toFixed(2)}</span>
+              <span className="font-medium text-gray-900">R{subtotal.toFixed(2)}</span>
             </div>
             
             <div className="flex justify-between">
               <span className="text-gray-600">Delivery</span>
-              <span className="font-medium">${deliveryFee.toFixed(2)}</span>
+              <span className="font-medium text-gray-900">R{deliveryFee.toFixed(2)}</span>
             </div>
             
             <div className="border-t pt-3">
               <div className="flex justify-between">
                 <span className="text-lg font-bold text-gray-800">Total</span>
-                <span className="text-lg font-bold text-purple-600">${total.toFixed(2)}</span>
+                <span className="text-lg font-bold text-gray-900">R{total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -175,7 +175,7 @@ export default function CheckoutPage() {
           ) : checkoutSuccess ? (
             'Order Placed Successfully!'
           ) : (
-            `Place Order • $${total.toFixed(2)}`
+            `Place Order • R${total.toFixed(2)}`
           )}
         </button>
       </div>

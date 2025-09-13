@@ -64,14 +64,20 @@ const Wrapper = styled.div`
 
   .scroller {
     max-width: 100%;
-    overflow: hidden;
-    -webkit-mask: linear-gradient(90deg, transparent, white 20%, white 80%, transparent);
-    mask: linear-gradient(90deg, transparent, white 20%, white 80%, transparent);
+    overflow-x: auto;
+    overflow-y: hidden;
+    cursor: grab;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+  }
+  .scroller::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   .scroller-inner {
     display: flex;
-    animation: ${scroll} 40s linear infinite;
+    gap: 1rem;
+    animation: ${scroll} 17.8s linear infinite;
   }
 `;
 

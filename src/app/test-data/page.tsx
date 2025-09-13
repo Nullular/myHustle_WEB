@@ -6,7 +6,6 @@ import { useAuthStore } from '@/lib/store/auth';
 import { shopRepository, productRepository, serviceRepository, favoriteRepository } from '@/lib/firebase/repositories';
 import { FavoriteTargetType } from '@/types/models';
 import { AuthService } from '@/lib/firebase/auth';
-import { REAL_SHOP_OWNERS } from '@/lib/demo/demoAuth';
 
 /**
  * Test component to verify all data connections work
@@ -246,56 +245,10 @@ export default function DataConnectionTest() {
       setLoading(false);
     }
   };
-  
-  const createShopOwnerAccounts = async () => {
-    setLoading(true);
-    setTestResults({});
-    
-    try {
-      // Create all shop owner accounts
-      for (const [key, owner] of Object.entries(REAL_SHOP_OWNERS)) {
-        await runTest(`Create Account: ${owner.displayName}`, async () => {
-          try {
-            const userData = {
-              email: owner.email,
-              password: owner.password,
-              confirmPassword: owner.password,
-              displayName: owner.displayName,
-              userType: owner.userType,
-              agreeToTerms: true,
-            };
-            
-            const user = await AuthService.signUp(userData);
-            return {
-              success: true,
-              email: user.email,
-              displayName: user.displayName,
-              userType: user.userType,
-            };
-          } catch (error) {
-            if (error instanceof Error && error.message.includes('email already')) {
-              return {
-                success: true,
-                message: 'Account already exists - ready to use!',
-                email: owner.email,
-              };
-            }
-            throw error;
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error creating shop owner accounts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
+
   const clearResults = () => {
     setTestResults({});
-  };
-  
-  return (
+  };  return (
     <div className="min-h-screen bg-neu-bg-primary p-6">
       <div className="max-w-6xl mx-auto">
         <div className="bg-white neu-shadow-lg rounded-3xl p-8">
@@ -311,14 +264,6 @@ export default function DataConnectionTest() {
               className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50"
             >
               {loading ? '🔄 Running Tests...' : '🚀 Run All Tests'}
-            </button>
-            
-            <button
-              onClick={createShopOwnerAccounts}
-              disabled={loading}
-              className="px-6 py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 disabled:opacity-50"
-            >
-              {loading ? '🔄 Creating Accounts...' : '👤 Create Shop Owner Accounts'}
             </button>
             
             <button

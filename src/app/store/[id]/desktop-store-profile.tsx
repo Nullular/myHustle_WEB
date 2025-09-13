@@ -106,6 +106,7 @@ export default function DesktopStoreProfileScreen({
           <div className="flex space-x-2">
             <ShareButton onClick={handleShare} />
             <FavoriteButton 
+              size={25}
               isFavorite={isFavorite}
               toggleFavorite={() => toggleFavorite()}
             />
@@ -143,23 +144,16 @@ export default function DesktopStoreProfileScreen({
         </div>
       </div>
       <div className="max-w-4xl mx-auto px-4 space-y-4">
-        <div className="space-y-3">
-          <h2 className="text-xl font-bold text-gray-900 px-2">Availability</h2>
-          <div className="flex space-x-2 overflow-x-auto pb-2 px-2">
-            {storeStatus.statusList.map((status, index) => (
-              <div
-                key={index}
-                className={`flex-shrink-0 px-3 py-2 rounded-2xl text-sm font-medium ${
-                  status.includes('Open Now')
-                    ? 'bg-green-500 text-white'
-                    : status.includes('Closed')
-                    ? 'bg-red-500 text-white'
-                    : 'neu-card-punched bg-white text-gray-800'
-                }`}
-              >
-                {status}
-              </div>
-            ))}
+        <div className="neu-card-punched rounded-3xl p-5 bg-white">
+          <h2 className="text-xl font-bold mb-3 text-gray-900">Availability</h2>
+          <div className="flex items-center space-x-3">
+            <div className={`w-3 h-3 rounded-full ${storeStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <p className="text-base text-gray-800">
+              <span className="font-semibold">{storeStatus.statusList[0]}</span>
+              {storeStatus.statusList[1] && (
+                <span className="text-gray-600"> - {storeStatus.statusList[1]}</span>
+              )}
+            </p>
           </div>
         </div>
         <NeuDescriptionBox>

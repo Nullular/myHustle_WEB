@@ -5,11 +5,12 @@ import styled from 'styled-components';
 interface FavoriteButtonProps {
   isFavorite: boolean;
   toggleFavorite: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  size?: number;
 }
 
-const FavoriteButton: React.FC<FavoriteButtonProps> = ({ isFavorite, toggleFavorite }) => {
+const FavoriteButton: React.FC<FavoriteButtonProps> = ({ isFavorite, toggleFavorite, size = 50 }) => {
   return (
-    <StyledWrapper>
+    <StyledWrapper size={size}>
       <div title="Like" className="heart-container">
         <input 
           id="Give-It-An-Id" 
@@ -17,6 +18,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ isFavorite, toggleFavor
           type="checkbox" 
           checked={isFavorite}
           onChange={toggleFavorite}
+          title={isFavorite ? "Unlike" : "Like"}
         />
         <div className="svg-container">
           <svg xmlns="http://www.w3.org/2000/svg" className="svg-outline" viewBox="0 0 24 24">
@@ -41,12 +43,12 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({ isFavorite, toggleFavor
   );
 }
 
-const StyledWrapper = styled.div`
+const StyledWrapper = styled.div<{ size: number }>`
   .heart-container {
     --heart-color: rgb(255, 91, 137);
     position: relative;
-    width: 50px;
-    height: 50px;
+    width: ${props => props.size}px;
+    height: ${props => props.size}px;
     transition: .3s;
   }
 

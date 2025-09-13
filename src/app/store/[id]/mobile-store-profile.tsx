@@ -119,6 +119,9 @@ export default function MobileStoreProfileScreen({
                   {shop.rating.toFixed(1)}
                 </span>
               </div>
+              <div className={`text-sm font-semibold mt-1 ${storeStatus.isOpen ? 'text-green-600' : 'text-red-600'}`}>
+                {storeStatus.statusList.join(' - ')}
+              </div>
             </div>
           </div>
         </div>

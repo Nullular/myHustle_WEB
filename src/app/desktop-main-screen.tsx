@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import FavoriteButton from '@/components/ui/FavoriteButton';
 import { 
   Search, 
   ShoppingCart, 
@@ -7,13 +8,14 @@ import {
   Settings, 
   LogOut,
   Star,
-  Heart,
   Plus,
   Filter,
   Store,
   MessageCircle,
 } from 'lucide-react';
 import { Shop, User, UserType } from '@/types/models';
+import FeaturedStores from '@/components/ui/FeaturedStores';
+import GrandOpeningBanner from '@/components/ui/GrandOpeningBanner';
 
 interface DesktopMainScreenProps {
   user: (User & { displayName?: string | null; email?: string | null; userType?: UserType }) | null;
@@ -192,7 +194,7 @@ export default function DesktopMainScreen({
           </div>
 
           {/* SLEEK FILTER CHIPS - HORIZONTAL SCROLL ON MOBILE */}
-          <div className="flex items-center space-x-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex items-center space-x-3 overflow-x-auto pt-2 pb-4 scrollbar-hide">
             <Filter className="h-5 w-5 text-gray-400 flex-shrink-0" />
             {filterCategories.map((category) => (
               <button
@@ -200,14 +202,22 @@ export default function DesktopMainScreen({
                 onClick={() => setSelectedCategory(category)}
                 className={`${
                   selectedCategory === category 
-                    ? 'neu-pressed bg-blue-100 text-blue-700' 
-                    : 'neu-punched text-gray-700'
-                } px-4 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-all duration-200`}
+                    ? 'neu-pressed bg-gray-300/50 text-black' 
+                    : 'neu-punched text-black'
+                } px-5 py-2 rounded-2xl text-sm font-medium whitespace-nowrap transition-all duration-200`}
               >
                 {category}
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="my-8">
+          <FeaturedStores shops={shops} />
+        </div>
+
+        <div className="my-8">
+          <GrandOpeningBanner />
         </div>
 
         {/* SLEEK SHOPS GRID - MOBILE-FIRST RESPONSIVE */}
@@ -233,21 +243,16 @@ export default function DesktopMainScreen({
 
                 {/* MODERN FAVORITE BUTTON */}
                 {user && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toggleFavorite(shop.id);
-                    }}
-                    className="absolute top-3 right-3 neu-button-punched p-2 rounded-full"
-                    aria-label="Toggle favorite"
-                    title="Toggle favorite"
-                  >
-                    <Heart
-                      className={`w-4 h-4 ${
-                        favorites.has(shop.id) ? 'text-red-500 fill-current' : 'text-gray-400'
-                      }`}
+                  <div className="absolute top-3 right-3">
+                    <FavoriteButton
+                      size={25}
+                      isFavorite={favorites.has(shop.id)}
+                      toggleFavorite={(e) => {
+                        e.preventDefault();
+                        toggleFavorite(shop.id);
+                      }}
                     />
-                  </button>
+                  </div>
                 )}
 
                 {/* SLEEK STATUS BADGE */}

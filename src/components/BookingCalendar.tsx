@@ -184,7 +184,7 @@ export function SelectionStatusCard({ startDate, endDate, isValid }: SelectionSt
 
   const getStatusText = () => {
     if (!startDate) return 'Select your start date';
-    if (!endDate) return 'Select your end date';
+    if (!endDate) return 'Select your time slot';
     if (isValid) return 'Valid selection';
     return 'Selection overlaps with blocked period';
   };
@@ -337,7 +337,7 @@ export function BookingButton({
 }: BookingButtonProps) {
   const getButtonText = () => {
     if (!startDate) return 'Select Date';
-    if (!endDate) return 'Book Single Day or Select End Date';
+    if (!endDate) return 'Book Single Day or Select Time Slot';
     if (!isEnabled) return 'Selection Not Available';
     const isSingleDay = startDate.toDateString() === endDate.toDateString();
     return `Book Selected ${isSingleDay ? 'Appointment' : 'Period'}`;

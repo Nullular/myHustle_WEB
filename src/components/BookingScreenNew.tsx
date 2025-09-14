@@ -379,6 +379,7 @@ export default function BookingScreen({
         <CustomCalendarGrid 
           days={calendarDays}
           onDateClick={handleDateClick}
+          sizeVariant="compact"
         />
         
         <SelectionStatusCard

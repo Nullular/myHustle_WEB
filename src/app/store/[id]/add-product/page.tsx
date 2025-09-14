@@ -8,7 +8,7 @@ import {
   Plus,
   X,
   Package,
-  DollarSign,
+
   Hash,
   Tag,
   Palette,
@@ -262,7 +262,7 @@ export default function AddProductPage({ params }: AddProductPageProps) {
                   Price *
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <span className="absolute left-3 top-3 h-5 w-5 flex items-center justify-center text-gray-400 font-semibold">R</span>
                   <input
                     type="number"
                     step="0.01"
@@ -280,7 +280,7 @@ export default function AddProductPage({ params }: AddProductPageProps) {
                   Expense Per Unit
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <span className="absolute left-3 top-3 h-5 w-5 flex items-center justify-center text-gray-400 font-semibold">R</span>
                   <input
                     type="number"
                     step="0.01"

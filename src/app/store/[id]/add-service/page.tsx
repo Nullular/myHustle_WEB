@@ -7,7 +7,7 @@ import {
   Camera,
   Plus,
   Clock,
-  DollarSign,
+
   Tag,
   Users,
   Calendar,
@@ -206,7 +206,7 @@ export default function AddServicePage({ params }: AddServicePageProps) {
                   Base Price *
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <span className="absolute left-3 top-3 h-5 w-5 flex items-center justify-center text-gray-400 font-semibold">R</span>
                   <input
                     type="number"
                     step="0.01"
@@ -240,7 +240,7 @@ export default function AddServicePage({ params }: AddServicePageProps) {
                   Expense Per Service
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <span className="absolute left-3 top-3 h-5 w-5 flex items-center justify-center text-gray-400 font-semibold">R</span>
                   <input
                     type="number"
                     step="0.01"

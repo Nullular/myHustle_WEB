@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "../styles/neumorphic.css";
+@import "../styles/neumorphic-variants.css";
+
+:root {
+  --background: #e0e0e0;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--neu-bg-primary, var(--background));
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Fix input text visibility */
+input, textarea, select {
+  color: #000000 !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #666666 !important;
+}
+
+/* Ensure focus states also have black text */
+input:focus, textarea:focus, select:focus {
+  color: #000000 !important;
+}
+
+/* Specific targeting for common input patterns */
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+input[type="number"], 
+input[type="tel"], 
+input[type="url"], 
+input[type="search"],
+input[type="time"] {
+  color: #000000 !important;
+}
+
+/* Target inputs with common Tailwind classes */
+.border-gray-300,
+.border-gray-200,
+.rounded-lg,
+.focus\:ring-2 {
+  color: #000000 !important;
+}
+
+/* Force black text on all form elements regardless of inheritance */
+form input, 
+form textarea, 
+form select,
+div input,
+div textarea,
+div select {
+  color: #000000 !important;
+}
+
+/* Override any component-level styling */
+* input,
+* textarea,
+* select {
+  color: #000000 !important;
+}

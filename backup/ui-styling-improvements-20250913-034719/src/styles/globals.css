@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.neu-inset-box {
+  border-radius: 25px;
+  background: #ebeaea;
+  box-shadow: inset 6px 6px 12px #5e5e5e, inset -6px -6px 12px #ffffff;
+}
+
+.neu-description-box {
+  border-radius: 25px;
+  background: linear-gradient(145deg, #d4d3d3, #fbfafa);
+  box-shadow:  14px 14px 28px #5e5e5e, -14px -14px 28px #ffffff;
+}

@@ -1,0 +1,325 @@
+/* Neumorphic Variants - Punched (Raised) & Pressed (Lowered) Effects */
+
+/* PUNCHED EFFECT - Raised/Elevated appearance (default state) */
+.neu-punched {
+  background: #e0e0e0;
+  border-radius: 15px;
+  box-shadow: 
+    6px 6px 12px #bebebe,
+    -6px -6px 12px #ffffff;
+  transition: all 0.3s ease;
+}
+
+.neu-punched:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    8px 8px 16px #bebebe,
+    -8px -8px 16px #ffffff;
+}
+
+.neu-punched:active {
+  transform: translateY(0);
+  box-shadow: 
+    4px 4px 8px #bebebe,
+    -4px -4px 8px #ffffff;
+}
+
+/* PRESSED EFFECT - Lowered/Inset appearance (selected/active state) */
+.neu-pressed {
+  background: #e0e0e0;
+  border-radius: 15px;
+  box-shadow: 
+    inset 4px 4px 8px rgba(190, 190, 190, 0.8),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+}
+
+.neu-pressed:hover {
+  box-shadow: 
+    inset 6px 6px 12px rgba(190, 190, 190, 0.9),
+    inset -6px -6px 12px rgba(255, 255, 255, 0.9);
+}
+
+/* CARD VARIANTS */
+.neu-card-punched {
+  background: #e0e0e0;
+  border-radius: 20px;
+  box-shadow: 
+    15px 15px 30px #bebebe,
+    -15px -15px 30px #ffffff;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+/* PRESSEDCARD1 - Large Inset Container */
+.pressedcard1 {
+  position: relative;
+  width: 100%;
+  min-height: 254px;
+  border-radius: 30px;
+  background: #e0e0e0;
+  box-shadow: 
+    rgba(50, 50, 93, 0.25) 0px 30px 50px -12px inset, 
+    rgba(0, 0, 0, 0.3) 0px 18px 26px -18px inset;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+/* SIMPLE FLAT CARD WITH ELEVATION */
+.simple-neu-card {
+  width: 200px;
+  height: 280px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.simple-neu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.12), 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Reset inner elements to normal styling */
+.simple-neu-card .neu-pressed {
+  background: #f3f4f6;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.simple-neu-card .neu-button-punched {
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+/* ANDROID-STYLE SCROLLING CONTAINERS */
+.android-scroll-container {
+  height: 280px;
+}
+
+/* CROP MODAL FIXES */
+.crop-modal-overlay {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+.crop-preview-image {
+  max-height: 400px;
+  max-width: 100%;
+  display: block;
+  transition: transform 0.2s ease;
+  transform-origin: center center;
+}
+
+.crop-container {
+  touch-action: none;
+  overflow: hidden;
+}
+
+.crop-zoom-scale {
+  transition: transform 0.2s ease;
+  transform-origin: center center;
+}
+
+.neu-card-punched {
+  transition: all 0.3s ease;
+}
+
+.neu-card-punched:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    20px 20px 40px #bebebe,
+    -20px -20px 40px #ffffff;
+}
+
+.neu-card-pressed {
+  background: #e0e0e0;
+  border-radius: 20px;
+  box-shadow: 
+    inset 8px 8px 16px rgba(190, 190, 190, 0.7),
+    inset -8px -8px 16px rgba(255, 255, 255, 0.7);
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+/* BUTTON VARIANTS */
+.neu-button-punched {
+  background: #e0e0e0;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 
+    6px 6px 12px #bebebe,
+    -6px -6px 12px #ffffff;
+  color: #333;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.neu-button-punched:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    8px 8px 16px #bebebe,
+    -8px -8px 16px #ffffff;
+}
+
+.neu-button-punched:active {
+  transform: translateY(0);
+  box-shadow: 
+    inset 4px 4px 8px rgba(190, 190, 190, 0.8),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+.neu-button-pressed {
+  background: #e0e0e0;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 
+    inset 4px 4px 8px rgba(190, 190, 190, 0.8),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+  color: #333;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* UTILITY CLASSES */
+.neu-shadow-punched {
+  box-shadow: 
+    6px 6px 12px #bebebe,
+    -6px -6px 12px #ffffff;
+}
+
+.neu-shadow-pressed {
+  box-shadow: 
+    inset 4px 4px 8px rgba(190, 190, 190, 0.8),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+.neu-shadow-punched-lg {
+  box-shadow: 
+    15px 15px 30px #bebebe,
+    -15px -15px 30px #ffffff;
+}
+
+.neu-shadow-pressed-lg {
+  box-shadow: 
+    inset 8px 8px 16px rgba(190, 190, 190, 0.7),
+    inset -8px -8px 16px rgba(255, 255, 255, 0.7);
+}
+
+/* INTERACTIVE STATES */
+.neu-interactive {
+  transition: all 0.2s ease;
+}
+
+.neu-interactive:hover {
+  transform: translateY(-1px);
+}
+
+.neu-interactive:active {
+  transform: translateY(0);
+}
+
+/* TOGGLEABLE STATES - Use with JavaScript to switch between punched/pressed */
+.neu-toggle {
+  transition: all 0.3s ease;
+}
+
+.neu-toggle.is-active {
+  box-shadow: 
+    inset 4px 4px 8px rgba(190, 190, 190, 0.8),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+.neu-toggle:not(.is-active) {
+  box-shadow: 
+    6px 6px 12px #bebebe,
+    -6px -6px 12px #ffffff;
+}
+
+/* MOBILE PERFORMANCE OPTIMIZATIONS - For Older Android Devices */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+.touch-optimized {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* SCROLLBAR HIDING */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* MODERN ANIMATION VARIANTS */
+.neu-float {
+  animation: neu-float 3s ease-in-out infinite;
+}
+
+@keyframes neu-float {
+  0%, 100% { transform: translateY(0px) translateZ(0); }
+  50% { transform: translateY(-4px) translateZ(0); }
+}
+
+.neu-pulse {
+  animation: neu-pulse 2s ease-in-out infinite;
+}
+
+@keyframes neu-pulse {
+  0%, 100% { 
+    box-shadow: 
+      6px 6px 12px #bebebe,
+      -6px -6px 12px #ffffff;
+  }
+  50% { 
+    box-shadow: 
+      8px 8px 16px #bebebe,
+      -8px -8px 16px #ffffff;
+  }
+}
+
+/* HOVER VARIATIONS */
+.neu-hover-glow:hover {
+  box-shadow: 
+    0 0 20px rgba(59, 130, 246, 0.3),
+    6px 6px 12px #bebebe,
+    -6px -6px 12px #ffffff;
+}
+
+.neu-hover-lift:hover {
+  transform: translateY(-2px) scale(1.02);
+  transition: all 0.2s ease;
+}
+
+/* MODERN GRADIENTS FOR VARIETY */
+.neu-gradient-blue {
+  background: linear-gradient(135deg, #e3f2fd 0%, #e1f5fe 100%);
+}
+
+.neu-gradient-purple {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e8eaf6 100%);
+}
+
+.neu-gradient-green {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
+}

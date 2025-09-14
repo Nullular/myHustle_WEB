@@ -1,0 +1,110 @@
+@import "tailwindcss";
+@import "../styles/neumorphic.css";
+@import "../styles/neumorphic-variants.css";
+
+:root {
+  --background: #e0e0e0;
+  --foreground: #171717;
+}
+
+/* Force light theme - override system dark mode preferences */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #e0e0e0 !important;
+    --foreground: #171717 !important;
+  }
+}
+
+/* Additional light theme enforcement */
+html, html.light, html[data-theme="light"] {
+  --background: #e0e0e0 !important;
+  --foreground: #171717 !important;
+  color-scheme: light !important;
+}
+
+/* Override any dark theme classes */
+.dark,
+html.dark,
+html[data-theme="dark"],
+[data-theme="dark"],
+body.dark {
+  --background: #e0e0e0 !important;
+  --foreground: #171717 !important;
+  background: #e0e0e0 !important;
+  color: #171717 !important;
+  color-scheme: light !important;
+}
+
+body {
+  background: var(--neu-bg-primary, var(--background));
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Fix input text visibility */
+input, textarea, select {
+  color: #000000 !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #666666 !important;
+}
+
+/* Ensure focus states also have black text */
+input:focus, textarea:focus, select:focus {
+  color: #000000 !important;
+}
+
+/* Specific targeting for common input patterns */
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+input[type="number"], 
+input[type="tel"], 
+input[type="url"], 
+input[type="search"],
+input[type="time"] {
+  color: #000000 !important;
+}
+
+/* Target inputs with common Tailwind classes */
+.border-gray-300,
+.border-gray-200,
+.rounded-lg,
+.focus\:ring-2 {
+  color: #000000 !important;
+}
+
+/* Force black text on all form elements regardless of inheritance */
+form input, 
+form textarea, 
+form select,
+div input,
+div textarea,
+div select {
+  color: #000000 !important;
+}
+
+/* Override any component-level styling */
+* input,
+* textarea,
+* select {
+  color: #000000 !important;
+}
+
+.neu-inset-box {
+  border-radius: 25px;
+  background: #ebeaea;
+  box-shadow: inset 13px 13px 13px #5e5e5e, inset -13px -13px 13px #ffffff;
+}

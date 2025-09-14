@@ -12,7 +12,8 @@ import {
   Video,
   Info,
   Paperclip,
-  Smile
+  Smile,
+  Plus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth';
@@ -211,165 +212,165 @@ export default function ChatScreen({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading conversation...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm">Loading conversation...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleBackClick}
-              className="neu-button p-2 mr-3"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-700" />
-            </motion.button>
+    <div className="fixed inset-0 bg-gray-50 flex flex-col">
+      {/* Android-style App Bar */}
+      <div className="bg-blue-600 text-white shadow-md">
+        <div className="flex items-center px-4 py-3 status-bar-height">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleBackClick}
+            className="p-2 -ml-2 mr-2 rounded-full hover:bg-blue-700 transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </motion.button>
+          
+          <div className="flex items-center flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-blue-500 border-2 border-blue-300 flex items-center justify-center mr-3">
+              <User className="w-5 h-5" />
+            </div>
             
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full neu-button bg-gray-100 flex items-center justify-center mr-3">
-                <User className="w-5 h-5 text-gray-500" />
-              </div>
-              
-              <div>
-                <h1 className="font-semibold text-gray-900">{otherParticipantName}</h1>
-                {businessContext && (
-                  <p className="text-sm text-gray-500">📍 {businessContext.shopName}</p>
-                )}
-              </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="font-medium text-white text-base truncate">{otherParticipantName}</h1>
+              {businessContext && (
+                <p className="text-blue-100 text-xs truncate">📍 {businessContext.shopName}</p>
+              )}
+              <p className="text-blue-200 text-xs">Online now</p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1">
             <motion.button
-              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="neu-button p-2"
+              className="p-2 rounded-full hover:bg-blue-700 transition-colors"
             >
-              <Phone className="w-5 h-5 text-gray-600" />
+              <Phone className="w-5 h-5" />
             </motion.button>
             
             <motion.button
-              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="neu-button p-2"
+              className="p-2 rounded-full hover:bg-blue-700 transition-colors"
             >
-              <Video className="w-5 h-5 text-gray-600" />
+              <Video className="w-5 h-5" />
             </motion.button>
             
             <motion.button
-              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="neu-button p-2"
+              className="p-2 rounded-full hover:bg-blue-700 transition-colors"
             >
-              <MoreVertical className="w-5 h-5 text-gray-600" />
+              <MoreVertical className="w-5 h-5" />
             </motion.button>
           </div>
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Messages Area - Android RecyclerView style */}
+      <div className="flex-1 overflow-y-auto android-chat-background">
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-            <p className="text-red-600">{error}</p>
+          <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
 
         {groupedMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-20 h-20 rounded-full neu-button bg-gray-100 flex items-center justify-center mb-4">
-              <User className="w-10 h-10 text-gray-400" />
+          <div className="flex flex-col items-center justify-center h-full px-8 text-center">
+            <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+              <User className="w-12 h-12 text-blue-500" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Start the conversation
             </h3>
-            <p className="text-gray-500">
-              Send a message to {otherParticipantName}
+            <p className="text-gray-500 text-sm leading-relaxed">
+              Send a message to {otherParticipantName} to get the conversation started!
             </p>
           </div>
         ) : (
-          <AnimatePresence>
-            {groupedMessages.map((group, groupIndex) => (
-              <div key={groupIndex}>
-                {/* Date separator */}
-                <div className="flex justify-center my-4">
-                  <span className="px-3 py-1 bg-gray-200 text-gray-600 text-sm rounded-full">
-                    {group.date}
-                  </span>
-                </div>
+          <div className="p-4 space-y-4">
+            <AnimatePresence>
+              {groupedMessages.map((group, groupIndex) => (
+                <div key={groupIndex}>
+                  {/* Date separator - Android style */}
+                  <div className="flex justify-center my-6">
+                    <div className="bg-gray-200 px-4 py-1 rounded-full shadow-sm">
+                      <span className="text-gray-600 text-xs font-medium">{group.date}</span>
+                    </div>
+                  </div>
 
-                {/* Messages */}
-                {group.messages.map((message, messageIndex) => (
-                  <MessageBubble
-                    key={message.id || `message-${groupIndex}-${messageIndex}`}
-                    message={message}
-                    isOwnMessage={message.senderId === user?.id}
-                    showTime={true}
-                  />
-                ))}
-              </div>
-            ))}
-          </AnimatePresence>
+                  {/* Messages */}
+                  {group.messages.map((message, messageIndex) => (
+                    <AndroidMessageBubble
+                      key={message.id || `message-${groupIndex}-${messageIndex}`}
+                      message={message}
+                      isOwnMessage={message.senderId === user?.id}
+                      showTime={true}
+                    />
+                  ))}
+                </div>
+              ))}
+            </AnimatePresence>
+            <div ref={messagesEndRef} />
+          </div>
         )}
-        
-        <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="flex items-end space-x-3">
+      {/* Android-style Input Area */}
+      <div className="bg-white border-t border-gray-200 safe-area-padding-bottom">
+        <div className="flex items-end px-4 py-3 space-x-3">
+          {/* Attachment Button */}
           <motion.button
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="neu-button p-2"
+            className="p-3 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
           >
-            <Paperclip className="w-5 h-5 text-gray-600" />
+            <Plus className="w-5 h-5 text-gray-600" />
           </motion.button>
 
+          {/* Input Field with Neumorphic styling */}
           <div className="flex-1 relative">
-            <textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={`Message ${otherParticipantName}...`}
-              rows={1}
-              className="w-full resize-none neu-input bg-gray-50 border-0 rounded-xl pr-12 min-h-[44px] max-h-[120px]"
-            />
+            <div className="neu-inset rounded-full px-4 py-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder={`Message ${otherParticipantName}...`}
+                className="w-full bg-transparent border-none outline-none text-gray-900 placeholder-gray-500 py-2"
+                disabled={isSending}
+              />
+            </div>
             
+            {/* Emoji Button */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 neu-button p-1"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
             >
-              <Smile className="w-4 h-4 text-gray-600" />
+              <Smile className="w-5 h-5 text-gray-500" />
             </motion.button>
           </div>
 
+          {/* Send Button */}
           <motion.button
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSendMessage}
             disabled={!newMessage.trim() || isSending}
-            className={`neu-button p-3 ${
+            className={`p-3 rounded-full transition-all ${
               newMessage.trim() 
-                ? 'bg-blue-600 text-white shadow-lg' 
-                : 'bg-gray-100 text-gray-400'
+                ? 'bg-blue-600 hover:bg-blue-700 shadow-lg' 
+                : 'bg-gray-200'
             }`}
           >
             {isSending ? (
-              <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-white" />
             ) : (
-              <Send className="w-5 h-5" />
+              <Send className={`w-5 h-5 ${newMessage.trim() ? 'text-white' : 'text-gray-400'}`} />
             )}
           </motion.button>
         </div>
@@ -378,14 +379,14 @@ export default function ChatScreen({
   );
 }
 
-// Message Bubble Component
-interface MessageBubbleProps {
+// Android-style Message Bubble Component
+interface AndroidMessageBubbleProps {
   message: Message;
   isOwnMessage: boolean;
   showTime: boolean;
 }
 
-function MessageBubble({ message, isOwnMessage, showTime }: MessageBubbleProps) {
+function AndroidMessageBubble({ message, isOwnMessage, showTime }: AndroidMessageBubbleProps) {
   // Helper function to format timestamp
   const formatTimestamp = (timestamp: any): string => {
     let date: Date;
@@ -406,7 +407,7 @@ function MessageBubble({ message, isOwnMessage, showTime }: MessageBubbleProps) 
     return date.toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit',
-      hour12: true 
+      hour12: false 
     });
   };
 
@@ -414,28 +415,28 @@ function MessageBubble({ message, isOwnMessage, showTime }: MessageBubbleProps) 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3`}
+      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-1`}
     >
-      <div className={`max-w-xs lg:max-w-md ${isOwnMessage ? 'order-2' : 'order-1'}`}>
+      <div className={`max-w-[85%] ${isOwnMessage ? 'order-2' : 'order-1'}`}>
         <div
           className={`
-            px-4 py-3 rounded-2xl
+            px-4 py-2 shadow-sm
             ${isOwnMessage 
-              ? 'bg-blue-600 text-white rounded-br-md' 
-              : 'neu-card bg-white text-gray-900 rounded-bl-md'
+              ? 'bg-blue-600 text-white rounded-3xl rounded-br-lg ml-12' 
+              : 'bg-white text-gray-900 rounded-3xl rounded-bl-lg mr-12 border border-gray-100'
             }
           `}
         >
           {/* Message content */}
-          <p className="text-sm whitespace-pre-wrap break-words">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
             {message.text || message.content || 'No message content'}
           </p>
           
-          {/* Timestamp */}
+          {/* Timestamp - Android style */}
           {showTime && (
             <p 
-              className={`text-xs mt-1 ${
-                isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+              className={`text-xs mt-1 text-right ${
+                isOwnMessage ? 'text-blue-100' : 'text-gray-400'
               }`}
             >
               {formatTimestamp(message.timestamp)}

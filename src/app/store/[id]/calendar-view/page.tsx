@@ -10,20 +10,20 @@ import {
   Clock,
   User,
   MapPin,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 
 import { NeuButton, NeuCard } from '@/components/ui';
-import { TimeSlotChip } from '@/components/BookingCalendar';
+import { CalendarHeader, DaysOfWeekHeader, CustomCalendarGrid, TimeSlotChip } from '@/components/BookingCalendar';
 import { useAuthStore } from '@/lib/store/auth';
 import { bookingRepository } from '@/lib/firebase/repositories';
+import { messagingRepository } from '@/lib/firebase/repositories/messagingRepository';
 import { Booking, BookingStatus } from '@/types';
 import { TimeSlot } from '@/types/booking';
 
-interface DayBookingInfo {
-  date: Date;
-  bookings: Booking[];
-}
+// Owner calendar view using customer calendar styling
 
 export default function CalendarViewPage() {
   const params = useParams();
@@ -36,12 +36,24 @@ export default function CalendarViewPage() {
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [calendarData, setCalendarData] = useState<DayBookingInfo[]>([]);
+  // no calendarData grid; we reuse customer calendar component for days UI
+
+  // Calendar selection styling (reuse customer style with CustomCalendarGrid)
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(new Date());
+
+  // Accept/Deny dialog state (reuse booking-requests UX)
+  const [selectedRequest, setSelectedRequest] = useState<Booking | null>(null);
+  const [showResponseDialog, setShowResponseDialog] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [actionType, setActionType] = useState<'accept' | 'deny'>('accept');
+  const [customMessage, setCustomMessage] = useState<string>('');
+  const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Load bookings for the calendar (following Android pattern exactly)
   useEffect(() => {
     if (!user) {
-      setError("Please log in to view calendar");
+      setError('Please log in to view calendar');
       setIsLoading(false);
       return;
     }
@@ -50,15 +62,10 @@ export default function CalendarViewPage() {
       try {
         setIsLoading(true);
         setError(null);
-        
         console.log('🔍 Loading calendar bookings for shop:', storeId);
-        
-        // Get all bookings for specific shop (matching Android pattern)
         const shopBookings = await bookingRepository.getBookingsForShop(storeId);
-        
         console.log('📋 Found calendar bookings:', shopBookings.length);
         setAllBookings(shopBookings);
-        
       } catch (err) {
         console.error('❌ Failed to load calendar bookings:', err);
         setError(`Failed to load bookings: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -71,60 +78,83 @@ export default function CalendarViewPage() {
     loadCalendarBookings();
   }, [user, storeId]);
 
-  // Generate calendar data for current month
-  useEffect(() => {
-    const generateCalendarData = () => {
-      const year = currentMonth.getFullYear();
-      const month = currentMonth.getMonth();
-      
-      // Get first day of month and number of days
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const daysInMonth = lastDay.getDate();
-      
-      // Get starting day of week (0 = Sunday)
-      const startDayOfWeek = firstDay.getDay();
-      
-      const days: DayBookingInfo[] = [];
-      
-      // Add empty days for previous month
-      for (let i = 0; i < startDayOfWeek; i++) {
-        const date = new Date(year, month, -startDayOfWeek + i + 1);
-        days.push({
-          date,
-          bookings: []
-        });
-      }
-      
-      // Add days of current month
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-        
-        // Find bookings for this date
-        const dayBookings = allBookings.filter(booking => booking.requestedDate === dateStr);
-        
-        days.push({
-          date,
-          bookings: dayBookings
-        });
-      }
-      
-      // Add remaining days to complete the grid (6 weeks = 42 days)
-      const remainingDays = 42 - days.length;
-      for (let i = 1; i <= remainingDays; i++) {
-        const date = new Date(year, month + 1, i);
-        days.push({
-          date,
-          bookings: []
-        });
-      }
-      
-      setCalendarData(days);
-    };
+  // Customer-style calendar day generation for consistent UI
+  type CalendarDay = import('@/types/booking').CalendarDay;
+  const generateCalendarDays = (year: number, month: number): CalendarDay[] => {
+    const today = new Date();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const firstDayOfWeek = firstDayOfMonth.getDay();
+    const daysInMonth = lastDayOfMonth.getDate();
+    const days: CalendarDay[] = [];
 
-    generateCalendarData();
-  }, [currentMonth, allBookings]);
+    // Prev month trailing
+    const prevMonth = new Date(year, month - 1, 0);
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const date = new Date(year, month - 1, prevMonth.getDate() - i);
+      days.push({
+        date,
+        isCurrentMonth: false,
+        isToday: false,
+        isSelectable: false,
+        isBlocked: false,
+        isStartOfRange: false,
+        isEndOfRange: false,
+        isInRange: false,
+      });
+    }
+
+    // Current month days
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const isToday = date.toDateString() === today.toDateString();
+      const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate()) && !isToday;
+      days.push({
+        date,
+        isCurrentMonth: true,
+        isToday,
+        isSelectable: !isPast,
+        isBlocked: false,
+        isStartOfRange: false,
+        isEndOfRange: false,
+        isInRange: false,
+      });
+    }
+
+    // Next month leading to fill grid
+    const totalCells = Math.ceil(days.length / 7) * 7;
+    const remainingCells = totalCells - days.length;
+    for (let day = 1; day <= remainingCells; day++) {
+      const date = new Date(year, month + 1, day);
+      days.push({
+        date,
+        isCurrentMonth: false,
+        isToday: false,
+        isSelectable: false,
+        isBlocked: false,
+        isStartOfRange: false,
+        isEndOfRange: false,
+        isInRange: false,
+      });
+    }
+    return days;
+  };
+
+  const updateDaysWithSelection = (days: CalendarDay[], selected: Date | null): CalendarDay[] => {
+    return days.map(d => ({
+      ...d,
+      isStartOfRange: !!(selected && d.date.toDateString() === selected.toDateString()),
+      isEndOfRange: !!(selected && d.date.toDateString() === selected.toDateString()),
+      isInRange: false,
+    }));
+  };
+
+  const ownerCalendarDays: CalendarDay[] = React.useMemo(() => {
+    const y = currentMonth.getFullYear();
+    const m = currentMonth.getMonth();
+    const base = generateCalendarDays(y, m);
+    return updateDaysWithSelection(base, selectedStartDate);
+  }, [currentMonth, selectedStartDate]);
 
   const handleBack = () => {
     router.back();
@@ -140,6 +170,7 @@ export default function CalendarViewPage() {
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
+    setSelectedStartDate(date);
   };
 
   const formatTime12Hour = (time24: string): string => {
@@ -157,6 +188,20 @@ export default function CalendarViewPage() {
   const getBookingsForDate = (date: Date): Booking[] => {
     const dateStr = date.toISOString().split('T')[0];
     return allBookings.filter(booking => booking.requestedDate === dateStr);
+  };
+
+  // Per-day dot indicators: accepted/pending/denied presence
+  const getIndicatorsForDate = (date: Date) => {
+    const bookings = getBookingsForDate(date);
+    if (!bookings.length) return null;
+    const hasAccepted = bookings.some(b => b.status === BookingStatus.ACCEPTED);
+    const hasPending = bookings.some(b => b.status === BookingStatus.PENDING);
+    const hasDenied = bookings.some(b => b.status === BookingStatus.DENIED || (b as any).status === 'DENIED');
+    return {
+      accepted: hasAccepted ? 1 : 0,
+      pending: hasPending ? 1 : 0,
+      denied: hasDenied ? 1 : 0,
+    };
   };
 
   const getStatusColor = (status: BookingStatus): string => {
@@ -195,6 +240,71 @@ export default function CalendarViewPage() {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const selectedDateBookings = getBookingsForDate(selectedDate);
+
+  // Accept/Deny actions (same UX as booking-requests)
+  const handleAcceptRequest = (request: Booking) => {
+    setSelectedRequest(request);
+    setActionType('accept');
+    const defaultMessage = `✅ Your booking for "${request.serviceName}" at ${request.shopName} on ${request.requestedDate} at ${request.requestedTime} has been ACCEPTED. Looking forward to seeing you!`;
+    setCustomMessage(defaultMessage);
+    setShowResponseDialog(true);
+  };
+
+  const handleDenyRequest = (request: Booking) => {
+    setSelectedRequest(request);
+    setActionType('deny');
+    const defaultMessage = `❌ Your booking for "${request.serviceName}" at ${request.shopName} on ${request.requestedDate} at ${request.requestedTime} has been DECLINED. Sorry for any inconvenience.`;
+    setCustomMessage(defaultMessage);
+    setShowResponseDialog(true);
+  };
+
+  const createBookingConversation = async (booking: Booking, isAccepted: boolean, messageContent: string) => {
+    try {
+      const shopOwner = user;
+      if (!shopOwner) throw new Error('Shop owner not authenticated');
+      const participants = [booking.customerId, booking.shopOwnerId];
+      const participantNames: Record<string, string> = {
+        [booking.customerId]: booking.customerName,
+        [booking.shopOwnerId]: shopOwner.displayName || shopOwner.email || 'Shop Owner',
+      };
+      const participantEmails: Record<string, string> = {
+        [booking.customerId]: booking.customerEmail,
+        [booking.shopOwnerId]: shopOwner.email || '',
+      };
+      await messagingRepository.createConversation({
+        participants,
+        participantNames,
+        participantEmails,
+        initialMessage: messageContent,
+        businessContext: { shopId: booking.shopId, shopName: booking.shopName },
+      });
+    } catch (e) {
+      console.error('❌ Failed to create booking conversation:', e);
+    }
+  };
+
+  const confirmResponse = async () => {
+    if (!selectedRequest) return;
+    try {
+      setIsUpdating(true);
+      const newStatus = actionType === 'accept' ? BookingStatus.ACCEPTED : BookingStatus.DENIED;
+      if (!selectedRequest.id) throw new Error('No booking ID found');
+      await bookingRepository.updateBookingStatus(selectedRequest.id, newStatus);
+      await createBookingConversation(selectedRequest, actionType === 'accept', customMessage);
+      // Update local state
+      setAllBookings(prev => prev.map(b => b.id === selectedRequest.id ? { ...b, status: newStatus } : b));
+      setActionSuccessMessage(`Booking ${actionType === 'accept' ? 'accepted' : 'denied'} successfully!`);
+      setTimeout(() => setActionSuccessMessage(null), 3000);
+    } catch (err) {
+      console.error(`❌ Failed to ${actionType} booking:`, err);
+      setActionError(`Failed to ${actionType} booking. Please try again.`);
+      setTimeout(() => setActionError(null), 5000);
+    } finally {
+      setIsUpdating(false);
+      setShowResponseDialog(false);
+      setSelectedRequest(null);
+    }
+  };
 
   // Authentication guard
   if (!user) {
@@ -238,31 +348,14 @@ export default function CalendarViewPage() {
       {/* Content */}
       <div className="max-w-6xl mx-auto p-4">
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Calendar Grid */}
+          {/* Calendar Grid - unified style with customer calendar */}
           <div className="lg:col-span-2">
             <NeuCard className="p-6">
-              {/* Calendar Header */}
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-800">
-                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                </h2>
-                <div className="flex space-x-2">
-                  <NeuButton
-                    variant="default"
-                    onClick={handlePreviousMonth}
-                    className="p-2"
-                  >
-                    <ChevronLeft size={20} />
-                  </NeuButton>
-                  <NeuButton
-                    variant="default"
-                    onClick={handleNextMonth}
-                    className="p-2"
-                  >
-                    <ChevronRight size={20} />
-                  </NeuButton>
-                </div>
-              </div>
+              <CalendarHeader
+                currentMonth={currentMonth}
+                onPreviousMonth={handlePreviousMonth}
+                onNextMonth={handleNextMonth}
+              />
 
               {isLoading && (
                 <div className="flex items-center justify-center py-12">
@@ -282,57 +375,13 @@ export default function CalendarViewPage() {
 
               {!isLoading && !error && (
                 <>
-                  {/* Day Names */}
-                  <div className="grid grid-cols-7 gap-1 mb-2">
-                    {dayNames.map((day) => (
-                      <div key={day} className="text-center py-2 text-sm font-medium text-gray-600">
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Calendar Days */}
-                  <div className="grid grid-cols-7 gap-1">
-                    {calendarData.map((dayInfo, index) => {
-                      const { date, bookings } = dayInfo;
-                      const isCurrentMonthDay = isCurrentMonth(date);
-                      const isTodayDate = isToday(date);
-                      const isSelected = isSelectedDate(date);
-                      
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => handleDateClick(date)}
-                          className={`
-                            relative p-2 text-sm border border-gray-100 hover:bg-gray-50 transition-all min-h-[60px] flex flex-col items-center justify-start
-                            ${isSelected ? 'bg-blue-500 text-white' : ''}
-                            ${isTodayDate && !isSelected ? 'bg-blue-100 text-blue-800 font-bold' : ''}
-                            ${!isCurrentMonthDay ? 'text-gray-300' : 'text-gray-700'}
-                          `}
-                        >
-                          <span className="mb-1">{date.getDate()}</span>
-                          {bookings.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {bookings.slice(0, 2).map((booking, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`w-2 h-2 rounded-full ${
-                                    booking.status === BookingStatus.PENDING ? 'bg-orange-500' :
-                                    booking.status === BookingStatus.ACCEPTED ? 'bg-green-500' :
-                                    booking.status === BookingStatus.COMPLETED ? 'bg-blue-500' :
-                                    'bg-red-500'
-                                  }`}
-                                />
-                              ))}
-                              {bookings.length > 2 && (
-                                <span className="text-xs">+{bookings.length - 2}</span>
-                              )}
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <DaysOfWeekHeader />
+                  <CustomCalendarGrid
+                    days={ownerCalendarDays}
+                    onDateClick={handleDateClick}
+                    getIndicators={getIndicatorsForDate}
+                    sizeVariant="compact"
+                  />
                 </>
               )}
             </NeuCard>
@@ -364,57 +413,126 @@ export default function CalendarViewPage() {
                   {selectedDateBookings
                     .sort((a, b) => a.requestedTime.localeCompare(b.requestedTime))
                     .map((booking) => {
-                    // Convert booking to TimeSlot-like format for styling consistency
-                    const timeSlot = {
-                      time: formatTime12Hour(booking.requestedTime),
-                      time24: booking.requestedTime,
-                      isAvailable: booking.status !== BookingStatus.CANCELLED,
-                      price: undefined
-                    };
-                    
-                    return (
-                      <div key={booking.id} className="mb-4">
-                        {/* Beautiful neumorphic time slot chip */}
-                        <TimeSlotChip
-                          timeSlot={timeSlot}
-                          isSelected={booking.status === BookingStatus.ACCEPTED}
-                          onSelected={() => {}} // No action needed for display
-                        />
-                        
-                        {/* Booking details card */}
-                        <div className="neu-card rounded-2xl p-4 mt-3 bg-gray-50">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center space-x-2">
-                              <User size={16} className="text-gray-500" />
-                              <span className="font-medium text-gray-800">{booking.customerName}</span>
+                      const timeSlot = {
+                        time: formatTime12Hour(booking.requestedTime),
+                        time24: booking.requestedTime,
+                        isAvailable: booking.status !== BookingStatus.CANCELLED,
+                        price: undefined
+                      } as TimeSlot;
+                      return (
+                        <div key={booking.id} className="mb-4">
+                          <TimeSlotChip
+                            timeSlot={timeSlot}
+                            isSelected={booking.status === BookingStatus.ACCEPTED}
+                            onSelected={() => {}}
+                          />
+                          <div className="neu-card rounded-2xl p-4 mt-3 bg-gray-50">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center space-x-2">
+                                <User size={16} className="text-gray-500" />
+                                <span className="font-medium text-gray-800">{booking.customerName}</span>
+                              </div>
+                              <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                                {booking.status.toUpperCase()}
+                              </div>
                             </div>
-                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                              {booking.status.toUpperCase()}
-                            </div>
-                          </div>
 
-                          {booking.serviceName && (
-                            <div className="flex items-center space-x-2 mb-2">
-                              <MapPin size={14} className="text-gray-500" />
-                              <span className="text-sm text-gray-700 font-medium">{booking.serviceName}</span>
-                            </div>
-                          )}
-                          
-                          {booking.customerEmail && (
-                            <div className="text-xs text-gray-600 bg-white/60 px-3 py-2 rounded-lg">
+                            {booking.serviceName && (
+                              <div className="flex items-center space-x-2 mb-2">
+                                <MapPin size={14} className="text-gray-500" />
+                                <span className="text-sm text-gray-700 font-medium">{booking.serviceName}</span>
+                              </div>
+                            )}
+
+                            <div className="text-sm text-gray-600 mb-3">
                               {booking.customerEmail}
                             </div>
-                          )}
+
+                            {booking.status === BookingStatus.PENDING && (
+                              <div className="flex items-center space-x-3 mt-2">
+                                <NeuButton
+                                  variant="default"
+                                  onClick={() => handleAcceptRequest(booking)}
+                                  className="px-6 py-2 text-sm bg-green-500 text-white hover:bg-green-600"
+                                >
+                                  <CheckCircle size={16} className="mr-2" />
+                                  Accept
+                                </NeuButton>
+                                <NeuButton
+                                  variant="default"
+                                  onClick={() => handleDenyRequest(booking)}
+                                  className="px-6 py-2 text-sm bg-red-500 text-white hover:bg-red-600"
+                                >
+                                  <XCircle size={16} className="mr-2" />
+                                  Deny
+                                </NeuButton>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               )}
             </NeuCard>
           </div>
         </div>
       </div>
+      {/* Success and error toasts */}
+      {actionSuccessMessage && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <NeuCard className="p-4 bg-green-50 border-green-200">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="text-green-600" size={20} />
+              <p className="text-green-800 font-medium">{actionSuccessMessage}</p>
+            </div>
+          </NeuCard>
+        </div>
+      )}
+      {actionError && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <NeuCard className="p-4 bg-red-50 border-red-200">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="text-red-600" size={20} />
+              <p className="text-red-800 font-medium">{actionError}</p>
+            </div>
+          </NeuCard>
+        </div>
+      )}
+
+      {/* Response Dialog */}
+      {showResponseDialog && selectedRequest && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <NeuCard className="max-w-lg w-full p-6">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">
+              {actionType === 'accept' ? 'Accept' : 'Deny'} Booking Request
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {actionType === 'accept' ? 'Accept' : 'Deny'} {selectedRequest.customerName}'s booking for {selectedRequest.requestedDate} at {formatTime12Hour(selectedRequest.requestedTime)}
+            </p>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Message to Customer:</label>
+              <textarea
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={4}
+                placeholder="Enter your message to the customer..."
+                disabled={isUpdating}
+              />
+              <p className="text-xs text-gray-500 mt-1">This message will be sent in a new conversation with the customer.</p>
+            </div>
+            <div className="flex items-center justify-end space-x-3">
+              <NeuButton variant="default" onClick={() => setShowResponseDialog(false)} disabled={isUpdating}>
+                Cancel
+              </NeuButton>
+              <NeuButton onClick={confirmResponse} disabled={isUpdating} className={actionType === 'accept' ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}>
+                {actionType === 'accept' ? 'Confirm Accept' : 'Confirm Deny'}
+              </NeuButton>
+            </div>
+          </NeuCard>
+        </div>
+      )}
     </div>
   );
 }

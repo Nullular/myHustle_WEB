@@ -16,7 +16,7 @@ import SimpleCropUpload from '@/components/ui/SimpleCropUploadWrapper';
 import { useAuthStore } from '@/lib/store/auth';
 import { useShop } from '@/hooks/useShops';
 import { productRepository } from '@/lib/firebase/repositories';
-import { Product } from '@/types/models';
+import { Product, ProductVariant, SizeVariant } from '@/types/models';
 import { PRODUCT_CATEGORIES } from '@/lib/data/categories';
 
 export default function EditProductPage() {
@@ -31,7 +31,7 @@ export default function EditProductPage() {
   const [productName, setProductName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency] = useState('ZAR');
   const [category, setCategory] = useState('Electronics');
   const [stockQuantity, setStockQuantity] = useState('');
   const [inStock, setInStock] = useState(true);
@@ -43,6 +43,11 @@ export default function EditProductPage() {
   
   // Images
   const [productImages, setProductImages] = useState<string[]>([]);
+  // Variants
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [sizeVariants, setSizeVariants] = useState<SizeVariant[]>([]);
+  const [showVariantDialog, setShowVariantDialog] = useState(false);
+  const [showSizeVariantDialog, setShowSizeVariantDialog] = useState(false);
   
   // UI state
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +57,7 @@ export default function EditProductPage() {
   const [newSpecKey, setNewSpecKey] = useState('');
   const [newSpecValue, setNewSpecValue] = useState('');
 
-  const currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'];
+  // Currency is fixed to ZAR (R)
 
   // Check if user is the owner of this store
   const isOwner = user && shop && user.id === shop.ownerId;
@@ -72,7 +77,7 @@ export default function EditProductPage() {
           setProductName(productData.name);
           setDescription(productData.description);
           setPrice(productData.price.toString());
-          setCurrency(productData.currency);
+          // Currency fixed to ZAR; ignore stored value
           setCategory(productData.category);
           setStockQuantity(productData.stockQuantity.toString());
           setInStock(productData.inStock);
@@ -82,6 +87,8 @@ export default function EditProductPage() {
           setTags(productData.tags || []);
           setSpecifications(productData.specifications || {});
           setProductImages(productData.imageUrls || []);
+          setVariants(productData.variants || []);
+          setSizeVariants(productData.sizeVariants || []);
         }
       } catch (error) {
         console.error('❌ Error loading product:', error);
@@ -153,7 +160,7 @@ export default function EditProductPage() {
         name: productName,
         description: description,
         price: Number(price),
-        currency: currency,
+  currency: 'ZAR',
         category: category,
         stockQuantity: Number(stockQuantity),
         inStock: inStock,
@@ -164,6 +171,8 @@ export default function EditProductPage() {
         specifications: specifications,
         imageUrls: productImages,
         primaryImageUrl: productImages[0] || '',
+        variants: variants,
+        sizeVariants: sizeVariants,
         updatedAt: Date.now(),
       };
 
@@ -374,16 +383,7 @@ export default function EditProductPage() {
                     Price *
                   </label>
                   <div className="flex">
-                    <select
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      title="Select currency"
-                    >
-                      {currencies.map(curr => (
-                        <option key={curr} value={curr}>{curr}</option>
-                      ))}
-                    </select>
+                    <div className="px-3 py-2 border border-gray-300 rounded-l-lg bg-gray-50 text-gray-700 select-none">ZAR (R)</div>
                     <input
                       type="number"
                       value={price}
@@ -535,6 +535,81 @@ export default function EditProductPage() {
             </div>
           </NeuCard>
 
+          {/* Product Variants */}
+          <NeuCard className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Product Variants</h3>
+              <NeuButton onClick={() => setShowVariantDialog(true)} variant="default">
+                <Plus className="mr-2" size={16} /> Add Variant
+              </NeuButton>
+            </div>
+            {variants.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No variants added yet</p>
+                <p className="text-sm">Add color, material, or other variants</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {variants.map((v, idx) => (
+                  <div key={v.id || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="text-sm">
+                      <span className="font-medium">{v.name}:</span>
+                      <span className="ml-2 text-gray-700">{v.value}</span>
+                      <span className="ml-4 text-green-600 font-medium">R{Number(v.price).toFixed(2)}</span>
+                      {typeof v.stockQuantity === 'number' && (
+                        <span className="ml-4 text-gray-600">Stock: {v.stockQuantity}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setVariants(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-red-600 hover:text-red-800"
+                      title="Remove variant"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </NeuCard>
+
+          {/* Size Variants */}
+          <NeuCard className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Size Variants</h3>
+              <NeuButton onClick={() => setShowSizeVariantDialog(true)} variant="default">
+                <Plus className="mr-2" size={16} /> Add Size
+              </NeuButton>
+            </div>
+            {sizeVariants.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No sizes added yet</p>
+                <p className="text-sm">Add different sizes and pricing</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {sizeVariants.map((sv, idx) => (
+                  <div key={sv.id || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="text-sm">
+                      <span className="font-medium">Size {sv.size}</span>
+                      <span className="ml-4 text-green-600 font-medium">R{Number(sv.price).toFixed(2)}</span>
+                      {typeof sv.stockQuantity === 'number' && (
+                        <span className="ml-4 text-gray-600">Stock: {sv.stockQuantity}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSizeVariants(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-red-600 hover:text-red-800"
+                      title="Remove size variant"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </NeuCard>
+
           {/* Save Button */}
           <div className="flex justify-end space-x-4 pt-6">
             <NeuButton
@@ -563,6 +638,119 @@ export default function EditProductPage() {
               )}
             </NeuButton>
           </div>
+        </div>
+      </div>
+
+      {/* Variant Dialog */}
+      {showVariantDialog && (
+        <AddVariantDialog
+          onClose={() => setShowVariantDialog(false)}
+          onAddVariant={(variant) => {
+            setVariants(prev => [
+              ...prev,
+              {
+                id: `variant-${prev.length}`,
+                name: variant.name,
+                value: variant.value,
+                price: variant.price,
+                imageUrl: variant.imageUrl || '',
+                stockQuantity: variant.stockQuantity ?? 0,
+                active: true,
+              }
+            ]);
+          }}
+        />
+      )}
+
+      {/* Size Variant Dialog */}
+      {showSizeVariantDialog && (
+        <AddSizeVariantDialog
+          onClose={() => setShowSizeVariantDialog(false)}
+          onAddSizeVariant={(sizeVariant) => {
+            setSizeVariants(prev => [
+              ...prev,
+              {
+                id: `size-${prev.length}`,
+                size: sizeVariant.size,
+                price: sizeVariant.price,
+                stockQuantity: sizeVariant.stockQuantity ?? 0,
+                active: true,
+              }
+            ]);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Minimal dialogs reused from add-product style
+function AddVariantDialog({
+  onClose,
+  onAddVariant
+}: {
+  onClose: () => void;
+  onAddVariant: (variant: { name: string; value: string; price: number; imageUrl?: string; stockQuantity?: number }) => void;
+}) {
+  const [name, setName] = useState('');
+  const [value, setValue] = useState('');
+  const [price, setPrice] = useState('');
+  const [stockQuantity, setStockQuantity] = useState('');
+
+  const handleSave = () => {
+    if (!name || !value || !price) return;
+    onAddVariant({ name, value, price: Number(price), stockQuantity: Number(stockQuantity) || 0 });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 className="text-xl font-bold mb-4">Add Product Variant</h3>
+        <div className="space-y-4">
+          <input className="w-full px-3 py-2 border rounded-lg" placeholder="Variant Name (e.g., Color)" value={name} onChange={(e) => setName(e.target.value)} />
+          <input className="w-full px-3 py-2 border rounded-lg" placeholder="Value (e.g., Red)" value={value} onChange={(e) => setValue(e.target.value)} />
+          <input className="w-full px-3 py-2 border rounded-lg" placeholder="Price" type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <input className="w-full px-3 py-2 border rounded-lg" placeholder="Stock Quantity" type="number" value={stockQuantity} onChange={(e) => setStockQuantity(e.target.value)} />
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg">Cancel</button>
+          <button onClick={handleSave} disabled={!name || !value || !price} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50">Add Variant</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddSizeVariantDialog({
+  onClose,
+  onAddSizeVariant
+}: {
+  onClose: () => void;
+  onAddSizeVariant: (sizeVariant: { size: string; price: number; stockQuantity?: number }) => void;
+}) {
+  const [size, setSize] = useState('');
+  const [price, setPrice] = useState('');
+  const [stockQuantity, setStockQuantity] = useState('');
+
+  const handleSave = () => {
+    if (!size || !price) return;
+    onAddSizeVariant({ size, price: Number(price), stockQuantity: Number(stockQuantity) || 0 });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 className="text-xl font-bold mb-4">Add Size Variant</h3>
+        <div className="space-y-4">
+          <input className="w-full px-3 py-2 border rounded-lg" placeholder="Size (e.g., S, M, L)" value={size} onChange={(e) => setSize(e.target.value)} />
+          <input className="w-full px-3 py-2 border rounded-lg" placeholder="Price" type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <input className="w-full px-3 py-2 border rounded-lg" placeholder="Stock Quantity" type="number" value={stockQuantity} onChange={(e) => setStockQuantity(e.target.value)} />
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 px-4 py-2 border rounded-lg">Cancel</button>
+          <button onClick={handleSave} disabled={!size || !price} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50">Add Size</button>
         </div>
       </div>
     </div>

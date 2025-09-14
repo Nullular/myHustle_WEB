@@ -5,6 +5,13 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Check, X, Loader2 } from 'lucide-react';
 import { CalendarDay, TimeSlot } from '@/types/booking';
 
+// Optional per-day booking indicators used by owner calendar
+type DayIndicators = {
+  accepted?: number;
+  pending?: number;
+  denied?: number;
+};
+
 // Calendar Header Component
 interface CalendarHeaderProps {
   currentMonth: Date;
@@ -65,17 +72,43 @@ export function DaysOfWeekHeader() {
 interface CalendarDayCellProps {
   day: CalendarDay;
   onDateClick: () => void;
+  indicators?: DayIndicators;
+  sizeVariant?: 'default' | 'compact';
 }
 
-export function CalendarDayCell({ day, onDateClick }: CalendarDayCellProps) {
-  const getButtonStyle = () => {
-    if (day.isBlocked) return 'bg-transparent text-gray-400 opacity-50'; // Same as other unclickable dates but slightly visible
-    if (day.isStartOfRange || day.isEndOfRange) return 'neu-pressed bg-blue-500 text-white';
-    if (day.isInRange) return 'neu-pressed bg-blue-200 text-blue-700';
+export function CalendarDayCell({ day, onDateClick, indicators, sizeVariant = 'default' }: CalendarDayCellProps) {
+  // New: unified selection styling helper (two states: selected vs unselected)
+  const getSelectedVsUnselectedStyle = () => {
+    const isSelected = day.isStartOfRange || day.isEndOfRange || day.isInRange;
+    if (isSelected) {
+      // Middle of a selected range vs endpoints
+      return day.isInRange && !(day.isStartOfRange || day.isEndOfRange)
+        ? 'neu-pressed bg-blue-200 text-blue-700'
+        : 'neu-pressed bg-blue-500 text-white';
+    }
+    // Unselected states
+    if (!day.isCurrentMonth || !day.isSelectable) return 'bg-transparent text-gray-300';
     if (day.isToday && day.isCurrentMonth) return 'neu-button bg-blue-300 text-white border-2 border-blue-400';
-    if (day.isCurrentMonth && day.isSelectable) return 'neu-button hover:neu-pressed bg-white text-gray-800';
-    return 'bg-transparent text-gray-300';
+    return 'neu-button hover:neu-pressed bg-white text-gray-800';
   };
+
+  const getButtonStyle = () => {
+    if (day.isBlocked) return 'bg-transparent text-gray-400 opacity-50'; // Blocked days
+    return getSelectedVsUnselectedStyle();
+  };
+
+  const sizeClass = sizeVariant === 'compact'
+    ? 'w-8 h-8 md:w-12 md:h-12'
+    : 'w-11 h-11 md:w-12 md:h-12';
+
+  // Make unselected a bit narrower on mobile for compact variant only
+  const isSelected = day.isStartOfRange || day.isEndOfRange || day.isInRange;
+  const widthOverrideMobile = sizeVariant === 'compact'
+    ? (isSelected ? 'w-8' : 'w-7') // keep height the same; md sizes unchanged
+    : '';
+  const paddingOverrideMobile = sizeVariant === 'compact'
+    ? (isSelected ? '' : '!px-0 !py-0 !text-[13px]') // force-remove padding and keep smaller text for unselected
+    : '';
 
   return (
     <motion.button
@@ -84,13 +117,21 @@ export function CalendarDayCell({ day, onDateClick }: CalendarDayCellProps) {
       whileHover={day.isSelectable ? { scale: 1.05 } : {}}
       whileTap={day.isSelectable ? { scale: 0.95 } : {}}
       className={`
-        w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-medium
+        ${sizeClass} ${widthOverrideMobile} ${paddingOverrideMobile} box-border rounded-2xl flex items-center justify-center text-[13px] md:text-sm font-medium
         transition-all duration-200 relative
         ${getButtonStyle()}
         ${day.isSelectable ? 'cursor-pointer' : 'cursor-not-allowed'}
       `}
     >
       {day.date.getDate()}
+      {/* Status indicator dots (accepted, pending, denied) */}
+      {indicators && (
+        <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-1">
+          {!!indicators.accepted && <span className="w-1.5 h-1.5 rounded-full bg-green-500 ring-1 ring-white/80" />}
+          {!!indicators.pending && <span className="w-1.5 h-1.5 rounded-full bg-orange-500 ring-1 ring-white/80" />}
+          {!!indicators.denied && <span className="w-1.5 h-1.5 rounded-full bg-red-500 ring-1 ring-white/80" />}
+        </div>
+      )}
     </motion.button>
   );
 }
@@ -99,9 +140,11 @@ export function CalendarDayCell({ day, onDateClick }: CalendarDayCellProps) {
 interface CustomCalendarGridProps {
   days: CalendarDay[];
   onDateClick: (date: Date) => void;
+  getIndicators?: (date: Date) => DayIndicators | null | undefined;
+  sizeVariant?: 'default' | 'compact';
 }
 
-export function CustomCalendarGrid({ days, onDateClick }: CustomCalendarGridProps) {
+export function CustomCalendarGrid({ days, onDateClick, getIndicators, sizeVariant = 'default' }: CustomCalendarGridProps) {
   return (
     <div className="neu-card rounded-3xl p-6 mb-6">
       <div className="grid grid-cols-7 gap-3">
@@ -110,6 +153,8 @@ export function CustomCalendarGrid({ days, onDateClick }: CustomCalendarGridProp
             key={index}
             day={day}
             onDateClick={() => day.isSelectable && onDateClick(day.date)}
+            indicators={getIndicators?.(day.date) || undefined}
+            sizeVariant={sizeVariant}
           />
         ))}
       </div>

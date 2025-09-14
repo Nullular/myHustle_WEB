@@ -21,6 +21,7 @@ import { NeuButton, NeuCard } from '@/components/ui';
 import { useAuthStore } from '@/lib/store/auth';
 import { useShop } from '@/hooks/useShops';
 import { useShopProducts, useShopServices } from '@/hooks/useProducts';
+import { productRepository, serviceRepository } from '@/lib/firebase/repositories';
 import { PRODUCT_CATEGORIES } from '@/lib/data/categories';
 
 export default function CatalogManagementPage() {
@@ -36,6 +37,7 @@ export default function CatalogManagementPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
   // Check if user is the owner of this store
   const isOwner = user && shop && user.id === shop.ownerId;
@@ -48,6 +50,7 @@ export default function CatalogManagementPage() {
 
   // Filter catalog items based on search and category
   const filteredItems = catalogItems.filter((item: any) => {
+    if (deletedIds.includes(item.id)) return false;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
@@ -66,9 +69,13 @@ export default function CatalogManagementPage() {
     router.push(`/store/${storeId}/add-service`);
   };
 
-  const handleViewProduct = (productId: string) => {
-    console.log('👁️ Viewing product:', productId);
-    router.push(`/item/${productId}`);
+  const handleViewItem = (itemId: string, itemType: 'product' | 'service') => {
+    console.log('👁️ Viewing item:', itemId, 'Type:', itemType);
+    if (itemType === 'service') {
+      router.push(`/service/${itemId}`);
+    } else {
+      router.push(`/item/${itemId}`);
+    }
   };
 
   const handleEditProduct = (itemId: string, itemType: string) => {
@@ -80,12 +87,24 @@ export default function CatalogManagementPage() {
     }
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    console.log('🗑️ Deleting product:', productId);
-    // TODO: Implement delete confirmation and action
-    if (window.confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
-      // Implement deletion logic here
-      console.log('Deleting product:', productId);
+  const handleDeleteItem = async (itemId: string, itemType: 'product' | 'service') => {
+    console.log('🗑️ Deleting item:', itemId, 'Type:', itemType);
+    if (!window.confirm('Are you sure you want to delete this item? This action cannot be undone.')) return;
+    try {
+      let success = false;
+      if (itemType === 'service') {
+        success = await serviceRepository.deleteService(itemId);
+      } else {
+        success = await productRepository.deleteProduct(itemId);
+      }
+      if (success) {
+        setDeletedIds((prev) => [...prev, itemId]);
+      } else {
+        alert('Failed to delete item. Please try again.');
+      }
+    } catch (err) {
+      console.error('❌ Error deleting item:', err);
+      alert('Failed to delete item. Please try again.');
     }
   };
 
@@ -134,9 +153,9 @@ export default function CatalogManagementPage() {
               </div>
             </div>
 
-            {/* Quick Add Buttons */}
-            <div className="flex items-center space-x-3">
-              <NeuButton onClick={handleAddService} className="hidden md:flex">
+            {/* Quick Add Buttons (hidden on mobile, visible md+) */}
+            <div className="hidden md:flex items-center space-x-3">
+              <NeuButton onClick={handleAddService}>
                 <Briefcase className="mr-2" size={16} />
                 Add Service
               </NeuButton>
@@ -372,7 +391,7 @@ export default function CatalogManagementPage() {
                       <div className="flex items-center space-x-2">
                         <NeuButton
                           variant="default"
-                          onClick={() => handleViewProduct(item.id)}
+                          onClick={() => handleViewItem(item.id, item.itemType)}
                           className="flex-1 text-sm"
                         >
                           <Eye className="mr-1" size={14} />
@@ -388,7 +407,7 @@ export default function CatalogManagementPage() {
                         </NeuButton>
                         <NeuButton
                           variant="default"
-                          onClick={() => handleDeleteProduct(item.id)}
+                          onClick={() => handleDeleteItem(item.id, item.itemType)}
                           className="p-2"
                         >
                           <Trash2 className="text-red-600" size={14} />
@@ -456,27 +475,33 @@ export default function CatalogManagementPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center space-x-2 flex-shrink-0">
+                      <div className="flex flex-col space-y-2 flex-shrink-0 md:flex-row md:space-y-0 md:space-x-2">
                         <NeuButton
                           variant="default"
-                          onClick={() => handleViewProduct(item.id)}
-                          className="p-2"
+                          onClick={() => handleViewItem(item.id, item.itemType)}
+                          className="px-3 py-1 text-xs md:p-2 md:text-sm"
+                          title="View"
                         >
-                          <Eye size={16} />
+                          <span className="hidden md:inline-flex"><Eye className="mr-1" size={14} />View</span>
+                          <span className="md:hidden"><Eye size={14} /></span>
                         </NeuButton>
                         <NeuButton
                           variant="default"
                           onClick={() => handleEditProduct(item.id, item.itemType)}
-                          className="p-2"
+                          className="px-3 py-1 text-xs md:p-2 md:text-sm"
+                          title="Edit"
                         >
-                          <Edit size={16} />
+                          <span className="hidden md:inline-flex"><Edit className="mr-1" size={14} />Edit</span>
+                          <span className="md:hidden"><Edit size={14} /></span>
                         </NeuButton>
                         <NeuButton
                           variant="default"
-                          onClick={() => handleDeleteProduct(item.id)}
-                          className="p-2"
+                          onClick={() => handleDeleteItem(item.id, item.itemType)}
+                          className="px-3 py-1 text-xs md:p-2 md:text-sm"
+                          title="Delete"
                         >
-                          <Trash2 className="text-red-600" size={16} />
+                          <span className="hidden md:inline-flex"><Trash2 className="text-red-600 mr-1" size={14} />Delete</span>
+                          <span className="md:hidden"><Trash2 className="text-red-600" size={14} /></span>
                         </NeuButton>
                       </div>
                     </div>

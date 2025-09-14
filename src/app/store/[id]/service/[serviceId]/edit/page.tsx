@@ -32,7 +32,7 @@ export default function EditServicePage() {
   const [serviceName, setServiceName] = useState('');
   const [description, setDescription] = useState('');
   const [basePrice, setBasePrice] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency] = useState('ZAR');
   const [category, setCategory] = useState('Consultation');
   const [estimatedDuration, setEstimatedDuration] = useState('');
   const [active, setActive] = useState(true);
@@ -53,7 +53,7 @@ export default function EditServicePage() {
   const [newRequirement, setNewRequirement] = useState('');
   const [newInclude, setNewInclude] = useState('');
 
-  const currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD'];
+  // Currency fixed to ZAR (R)
 
   // Check if user is the owner of this store
   const isOwner = user && shop && user.id === shop.ownerId;
@@ -73,7 +73,7 @@ export default function EditServicePage() {
           setServiceName(serviceData.name);
           setDescription(serviceData.description);
           setBasePrice(serviceData.basePrice.toString());
-          setCurrency(serviceData.currency);
+          // Currency fixed to ZAR; ignore stored value
           setCategory(serviceData.category);
           setEstimatedDuration(serviceData.estimatedDuration.toString());
           setActive(serviceData.active);
@@ -159,7 +159,7 @@ export default function EditServicePage() {
         name: serviceName,
         description: description,
         basePrice: Number(basePrice),
-        currency: currency,
+  currency: 'ZAR',
         category: category,
         estimatedDuration: Number(estimatedDuration),
         active: active,
@@ -363,16 +363,7 @@ export default function EditServicePage() {
                     Price *
                   </label>
                   <div className="flex">
-                    <select
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      title="Select currency"
-                    >
-                      {currencies.map(curr => (
-                        <option key={curr} value={curr}>{curr}</option>
-                      ))}
-                    </select>
+                    <div className="px-3 py-2 border border-gray-300 rounded-l-lg bg-gray-50 text-gray-700 select-none">ZAR (R)</div>
                     <input
                       type="number"
                       value={basePrice}

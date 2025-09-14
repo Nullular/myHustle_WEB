@@ -133,7 +133,14 @@ export default function MessagingScreen({ onStartNewChat, onBackClick }: Messagi
             } as MessagePreview;
           })
       );
-      setMessagePreviews((previews.filter(Boolean) as MessagePreview[]));
+      // Sort previews by last modified (desc): use lastMessage timestamp or updatedAt fallback from the source conversations
+      const enriched = (previews.filter(Boolean) as MessagePreview[]);
+      const timeForConv = (conv: any) => conv?.lastMessage?.timestamp?.toMillis?.() || conv?.updatedAt?.toMillis?.() || 0;
+      const timeById: Record<string, number> = Object.fromEntries(
+        conversations.map(c => [c.id, timeForConv(c)])
+      );
+      const sorted = enriched.sort((a, b) => (timeById[b.conversationId] || 0) - (timeById[a.conversationId] || 0));
+      setMessagePreviews(sorted);
     };
     fetchPreviewsAndPatch();
   }, [conversations, user]);
@@ -314,7 +321,7 @@ export default function MessagingScreen({ onStartNewChat, onBackClick }: Messagi
             )}
           </div>
         ) : (
-          <div className="p-4 space-y-2">
+          <div className="p-4 space-y-4 md:space-y-5">
             <AnimatePresence>
               {filteredPreviews.map((preview) => (
                 <ConversationCard
@@ -348,10 +355,14 @@ function ConversationCard({ preview, onClick }: ConversationCardProps) {
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`
-        neu-card p-4 cursor-pointer transition-all duration-200
-        ${hasUnread ? 'bg-blue-50 border-blue-200' : 'bg-white'}
-      `}
+      className={
+        `p-4 cursor-pointer transition-all duration-200`
+      }
+      style={{
+        borderRadius: 20,
+        background: 'linear-gradient(145deg, #cacaca, #f0f0f0)',
+        boxShadow: '28px 28px 56px #808080, -28px -28px 56px #ffffff'
+      }}
     >
       <div className="flex items-center space-x-3">
         {/* Avatar */}

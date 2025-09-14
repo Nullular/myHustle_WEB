@@ -114,7 +114,7 @@ export default function MyStoresPage() {
             className="flex items-center space-x-2"
           >
             <Plus size={20} />
-            <span>Create Store</span>
+            <span className="hidden sm:inline">Create Store</span>
           </NeuButton>
         </div>
       </header>

@@ -12,11 +12,13 @@ import {
 import FavoriteButton from '@/components/ui/FavoriteButton';
 import ShareButton from '@/components/ui/ShareButton';
 import { Shop, Product, Service, User } from '@/types';
+import { ReviewTargetType } from '@/types/Review';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import NeuInsetBox from '@/components/ui/NeuInsetBox';
 import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
 import ItemCard from '@/components/ui/ItemCard';
 import ServiceCard from '@/components/ui/ServiceCard';
+import { ReviewsList } from '@/components/reviews';
 
 interface MobileStoreProfileProps {
     router: AppRouterInstance;
@@ -174,6 +176,17 @@ export default function MobileStoreProfileScreen({
             </div>
           </NeuInsetBox>
         )}
+
+        {/* Reviews Section */}
+        <NeuInsetBox>
+          <ReviewsList 
+            targetType={ReviewTargetType.SHOP}
+            targetId={shop.id}
+            targetName={shop.name}
+            shopId={shop.id}
+            showWriteReview={true}
+          />
+        </NeuInsetBox>
 
         <div className="neu-card rounded-3xl p-4">
           <h2 className="text-lg font-bold mb-3 text-gray-900">Contact</h2>

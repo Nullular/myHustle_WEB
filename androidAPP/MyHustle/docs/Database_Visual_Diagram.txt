@@ -1,0 +1,105 @@
+```
+# MyHustle Database - Entity Relationship Diagram
+# =====================================================
+
+┌─────────────────┐          ┌─────────────────┐          ┌─────────────────┐
+│     USERS       │          │     SHOPS       │          │    PRODUCTS     │
+├─────────────────┤          ├─────────────────┤          ├─────────────────┤
+│ id (PK)         │◄─────────┤ ownerId (FK)    │◄─────────┤ shopId (FK)     │
+│ email           │          │ id (PK)         │          │ ownerId (FK)    │
+│ displayName     │          │ name            │          │ id (PK)         │
+│ profileImageUrl │          │ description     │          │ name            │
+│ phoneNumber     │          │ logoUrl         │          │ description     │
+│ address         │          │ bannerUrl       │          │ price           │
+│ userType        │          │ rating          │          │ imageUrls       │
+│ createdAt       │          │ category        │          │ category        │
+│ isVerified      │          │ isActive        │          │ inStock         │
+└─────────────────┘          │ isVerified      │          │ rating          │
+                             │ availability    │          │ isActive        │
+                             └─────────────────┘          └─────────────────┘
+                                      │                            
+                                      │                            
+                             ┌─────────────────┐          ┌─────────────────┐
+                             │    SERVICES     │          │     ORDERS      │
+                             ├─────────────────┤          ├─────────────────┤
+                             │ shopId (FK)     │          │ customerId (FK) │
+                             │ ownerId (FK)    │    ┌─────┤ shopId (FK)     │
+                             │ id (PK)         │    │     │ ownerId (FK)    │
+                             │ name            │    │     │ id (PK)         │
+                             │ description     │    │     │ orderNumber     │
+                             │ basePrice       │    │     │ items[]         │
+                             │ category        │    │     │ total           │
+                             │ isBookable      │    │     │ status          │
+                             │ isActive        │    │     │ paymentStatus   │
+                             └─────────────────┘    │     │ shippingAddress │
+                                      │             │     │ createdAt       │
+                                      │             │     └─────────────────┘
+                                      │             │              
+                             ┌─────────────────┐    │     ┌─────────────────┐
+                             │    BOOKINGS     │    │     │   FAVORITES     │
+                             ├─────────────────┤    │     ├─────────────────┤
+                             │ customerId (FK) │    │     │ userId (FK)     │
+                             │ shopId (FK)     │────┘     │ targetId        │
+                             │ serviceId (FK)  │          │ targetType      │
+                             │ ownerId (FK)    │          │ shopId (FK)     │
+                             │ id (PK)         │          │ id (PK)         │
+                             │ bookingNumber   │          │ createdAt       │
+                             │ requestedDate   │          └─────────────────┘
+                             │ requestedTime   │                   
+                             │ status          │          ┌─────────────────┐
+                             │ total           │          │    REVIEWS      │
+                             │ createdAt       │          ├─────────────────┤
+                             └─────────────────┘          │ customerId (FK) │
+                                      │                   │ shopId (FK)     │
+                                      │                   │ targetId        │
+                             ┌─────────────────┐          │ targetType      │
+                             │ CONVERSATIONS   │          │ id (PK)         │
+                             ├─────────────────┤          │ rating          │
+                             │ participants[]  │          │ content         │
+                             │ id (PK)         │          │ orderId (FK)    │
+                             │ lastMessage     │          │ bookingId (FK)  │
+                             │ unreadCount     │          │ isVisible       │
+                             │ bookingId (FK)  │──────────┤ createdAt       │
+                             │ type            │          └─────────────────┘
+                             │ isActive        │                   
+                             │ createdAt       │          ┌─────────────────┐
+                             └─────────────────┘          │ NOTIFICATIONS   │
+                                      │                   ├─────────────────┤
+                                      │                   │ userId (FK)     │
+                             ┌─────────────────┐          │ id (PK)         │
+                             │    MESSAGES     │          │ type            │
+                             ├─────────────────┤          │ title           │
+                             │ conversationId  │──────────┤ message         │
+                             │ senderId (FK)   │          │ relatedId       │
+                             │ receiverId (FK) │          │ isRead          │
+                             │ id (PK)         │          │ createdAt       │
+                             │ content         │          └─────────────────┘
+                             │ messageType     │                   
+                             │ bookingId (FK)  │          
+                             │ isRead          │          
+                             │ timestamp       │          
+                             └─────────────────┘          
+
+# RELATIONSHIPS LEGEND:
+# ═══════════════════
+# 
+# ONE-TO-MANY:
+# Users ──→ Shops (1 user can own multiple shops)
+# Users ──→ Orders (1 user can have multiple orders)
+# Users ──→ Bookings (1 user can have multiple bookings)
+# Users ──→ Reviews (1 user can write multiple reviews)
+# Users ──→ Favorites (1 user can have multiple favorites)
+# Users ──→ Notifications (1 user can have multiple notifications)
+# Shops ──→ Products (1 shop can have multiple products)
+# Shops ──→ Services (1 shop can have multiple services)
+# Conversations ──→ Messages (1 conversation can have multiple messages)
+# 
+# MANY-TO-MANY:
+# Users ↔ Conversations (users can participate in multiple conversations)
+# 
+# OPTIONAL RELATIONSHIPS:
+# Bookings ──→ Conversations (booking may generate conversation)
+# Orders ──→ Reviews (order may generate review)
+# Bookings ──→ Reviews (booking may generate review)
+
+```

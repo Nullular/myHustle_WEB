@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CodebuddyPersistentProjectState">
+    <option name="additionalOptionsVisible" value="true" />
+    <option name="autoFileSelection" value="true" />
+    <option name="promptHistory">
+      <list>
+        <option value="please just create the files shown under the comment other screen need to be declared" />
+        <option value="please refer to the neumorphic compose site for the documentation im using for the style. my search bar does not display the style correctly and the shadows are as crips and also get cut off" />
+        <option value="I am trying to apply the glassmorphism that is seen in the article, but for some reason does not want to accept the parameters blurRadius and blurAlpha. Why? Can you fix it?. Please look at the article" />
+        <option value="I want you to look over my entire project, specifically the screens and data file on this project. I want you to give me a list of all of the data parameters, its data types, its format, and what frame works need to be involved to get all this code to go live. " />
+      </list>
+    </option>
+    <option name="selectedModel" value="codebuddy:CLAUDE_4_SONNET_V7_WEB_SEARCH" />
+  </component>
+</project>

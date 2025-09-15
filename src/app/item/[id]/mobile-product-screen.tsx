@@ -12,6 +12,8 @@ import {
   Check
 } from 'lucide-react';
 import ShareButton from '@/components/ui/ShareButton';
+import { ReviewsList } from '@/components/reviews';
+import { ReviewTargetType } from '@/types/Review';
 
 import { Product, User } from '@/types/models';
 
@@ -180,6 +182,17 @@ export function MobileProductScreen({
         <div className="neu-card rounded-2xl p-4">
           <h3 className="text-md font-bold text-gray-800 mb-2">Description</h3>
           <p className="text-gray-600 leading-relaxed text-sm">{product.description}</p>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="neu-card rounded-2xl p-4">
+          <ReviewsList 
+            targetType={ReviewTargetType.PRODUCT}
+            targetId={product.id}
+            targetName={product.name}
+            shopId={product.shopId}
+            showWriteReview={true}
+          />
         </div>
       </div>
 

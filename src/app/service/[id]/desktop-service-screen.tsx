@@ -15,6 +15,8 @@ import {
   Clock
 } from 'lucide-react';
 import ShareButton from '@/components/ui/ShareButton';
+import { ReviewsList } from '@/components/reviews';
+import { ReviewTargetType } from '@/types/Review';
 
 import { NeuButton, NeuCard } from '@/components/ui';
 import { Service, User } from '@/types/models';
@@ -176,22 +178,13 @@ export function DesktopServiceScreen({
 
         {/* Reviews Section */}
         <NeuCard className="p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4">Customer Reviews</h2>
-          <div className="text-center py-8 text-gray-500">
-            <Star className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-            <p>Reviews system coming soon...</p>
-            <div className="mt-4">
-              <div className="flex items-center justify-center space-x-1 mb-2">
-                <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                <span className="font-bold text-lg">{service.rating.toFixed(1)}</span>
-                <span className="text-gray-500">({service.totalReviews || 0} reviews)</span>
-              </div>
-              <p className="text-sm text-gray-400 italic">
-                "Excellent service! Professional, timely, and exceeded expectations. Highly recommended!"
-              </p>
-              <p className="text-xs text-gray-400 mt-2">- Sarah M.</p>
-            </div>
-          </div>
+          <ReviewsList 
+            targetType={ReviewTargetType.SERVICE}
+            targetId={service.id}
+            targetName={service.name}
+            shopId={service.shopId}
+            showWriteReview={true}
+          />
         </NeuCard>
       </div>
 

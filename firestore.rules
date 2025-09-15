@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reviews collection rules
+    match /reviews/{reviewId} {
+      // Anyone can read visible reviews
+      allow read: if resource.data.visible == true;
+      
+      // Only authenticated users can create reviews
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.customerId
+        && isValidReview(request.resource.data);
+      
+      // Only the review author can update their review (and only certain fields)
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.customerId
+        && onlyUpdatingAllowedFields();
+      
+      // Only admins or shop owners can delete reviews
+      allow delete: if request.auth != null 
+        && (hasAdminRole() || isShopOwner(resource.data.shopId));
+    }
+
+    // Function to validate review data
+    function isValidReview(reviewData) {
+      return reviewData.keys().hasAll(['customerId', 'shopId', 'targetType', 'targetId', 'rating', 'content'])
+        && reviewData.rating is number 
+        && reviewData.rating >= 1 
+        && reviewData.rating <= 5
+        && reviewData.content is string
+        && reviewData.content.size() > 0
+        && reviewData.targetType in ['SHOP', 'PRODUCT', 'SERVICE'];
+    }
+
+    // Function to check if only allowed fields are being updated
+    function onlyUpdatingAllowedFields() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['content', 'title', 'rating', 'detailedRatings', 'imageUrls', 'updatedAt']);
+    }
+
+    // Function to check if user has admin role
+    function hasAdminRole() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Function to check if user is shop owner
+    function isShopOwner(shopId) {
+      return exists(/databases/$(database)/documents/shops/$(shopId))
+        && get(/databases/$(database)/documents/shops/$(shopId)).data.ownerId == request.auth.uid;
+    }
+
+    // Owner responses sub-collection
+    match /reviews/{reviewId}/responses/{responseId} {
+      allow read: if true; // Anyone can read responses
+      allow create, update: if request.auth != null 
+        && isShopOwner(get(/databases/$(database)/documents/reviews/$(reviewId)).data.shopId);
+    }
+
+    // Review votes sub-collection
+    match /reviews/{reviewId}/votes/{voteId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null 
+        && request.auth.uid == voteId; // voteId should be the user's UID
+    }
+  }
+}

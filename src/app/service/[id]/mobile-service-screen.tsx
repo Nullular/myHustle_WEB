@@ -14,6 +14,8 @@ import {
   Clock
 } from 'lucide-react';
 import ShareButton from '@/components/ui/ShareButton';
+import { ReviewsList } from '@/components/reviews';
+import { ReviewTargetType } from '@/types/Review';
 
 import { Service, User } from '@/types/models';
 
@@ -119,6 +121,17 @@ export function MobileServiceScreen({
             </div>
           </div>
         )}
+
+        {/* Reviews Section */}
+        <div className="neu-card rounded-2xl p-4">
+          <ReviewsList 
+            targetType={ReviewTargetType.SERVICE}
+            targetId={service.id}
+            targetName={service.name}
+            shopId={service.shopId}
+            showWriteReview={true}
+          />
+        </div>
       </div>
 
       {/* Sticky Bottom Bar */}

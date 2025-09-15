@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { 
   Store, 
   Plus, 
-  ArrowLeft,
   Home,
   Star,
   Clock,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { NeuButton, NeuCard } from '@/components/ui';
+import { BackButton } from '@/components/navigation/BackButton';
 import { useOwnedShops } from '@/hooks/useOwnedShops';
 import { useAuthStore } from '@/lib/store/auth';
 import { Shop } from '@/types';
@@ -82,14 +82,7 @@ export default function MyStoresPage() {
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <NeuButton
-                variant="default"
-                onClick={() => router.back()}
-                className="flex items-center space-x-2"
-              >
-                <ArrowLeft size={20} />
-                <span className="hidden sm:block">Back</span>
-              </NeuButton>
+              <BackButton />
               
               <NeuButton
                 variant="default"

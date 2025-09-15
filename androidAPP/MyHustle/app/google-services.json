@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1065367945029",
+    "project_id": "myhustle-39688",
+    "storage_bucket": "myhustle-39688.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1065367945029:android:5aa3de73608d751469882c",
+        "android_client_info": {
+          "package_name": "com.blueclipse.myhustle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfT-IY2RbF1Lznvd0Do58pHU_0O7Pzr8k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1065367945029:android:f6daaf41f5df69f469882c",
+        "android_client_info": {
+          "package_name": "com.example.myhustle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfT-IY2RbF1Lznvd0Do58pHU_0O7Pzr8k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

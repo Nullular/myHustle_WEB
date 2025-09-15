@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="imgLogo" type="id" />
+    <item name="tvName" type="id" />
+    <item name="tvDescription" type="id" />
+    <item name="ratingBar" type="id" />
+</resources>

@@ -14,12 +14,14 @@ import {
 } from 'lucide-react';
 import ShareButton from '@/components/ui/ShareButton';
 import { Shop, Product, Service, User } from '@/types';
+import { ReviewTargetType } from '@/types/Review';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import NeuInsetBox from '@/components/ui/NeuInsetBox';
 import NeuDescriptionBox from '@/components/ui/NeuDescriptionBox';
 import ItemCard from '@/components/ui/ItemCard';
 import ServiceCard from '@/components/ui/ServiceCard';
 import FavoriteButton from '@/components/ui/FavoriteButton';
+import { ReviewsList } from '@/components/reviews';
 import { useDragScroll } from '@/hooks/useDragScroll';
 
 interface StoreProfileProps {
@@ -233,6 +235,17 @@ export default function DesktopStoreProfileScreen({
                   </div>
                 </NeuInsetBox>
               )}
+
+              {/* Reviews Section */}
+              <NeuInsetBox>
+                <ReviewsList 
+                  targetType={ReviewTargetType.SHOP}
+                  targetId={shop.id}
+                  targetName={shop.name}
+                  shopId={shop.id}
+                  showWriteReview={true}
+                />
+              </NeuInsetBox>
 
               {/* Contact Section */}
               <div className="neu-card-punched rounded-3xl p-8 bg-gray-50">

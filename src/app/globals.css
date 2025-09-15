@@ -103,6 +103,12 @@ div select {
   color: #000000 !important;
 }
 
+/* Review rating distribution bars */
+.rating-bar {
+  width: var(--rating-width, 0%);
+  transition: width 0.3s ease-in-out;
+}
+
 .neu-inset-box {
   border-radius: 25px;
   background: #ebeaea;

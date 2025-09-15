@@ -1,6 +1,0 @@
-{
-    "terminal.integrated.defaultProfile.windows": "PowerShell",
-    "git.enableSmartCommit": true,
-    "git.autofetch": true,
-    "java.configuration.updateBuildConfiguration": "interactive"
-}

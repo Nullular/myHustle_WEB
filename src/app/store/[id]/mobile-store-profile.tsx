@@ -73,8 +73,8 @@ export default function MobileStoreProfileScreen({
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
       const currentMinutes = currentHour * 60 + currentMinute;
-      const [openH, openM] = shop.openTime24.split(':').map((x: string) => parseInt(x) || 8);
-      const [closeH, closeM] = shop.closeTime24.split(':').map((x: string) => parseInt(x) || 18);
+      const [openH, openM] = shop.openTime24.split(':').map((x: string) => parseInt(x));
+      const [closeH, closeM] = shop.closeTime24.split(':').map((x: string) => parseInt(x));
       const openMinutes = openH * 60 + openM;
       const closeMinutes = closeH === 24 && closeM === 0 ? 24 * 60 : closeH * 60 + closeM;
       const isOpen = currentMinutes >= openMinutes && currentMinutes < closeMinutes;

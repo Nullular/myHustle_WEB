@@ -112,13 +112,12 @@ export class ReviewService {
         ...doc.data()
       })) as Review[];
 
-      // Filter visible reviews and sort in memory
-      const visibleReviews = allReviews
-        .filter(review => review.visible === true)
+      // Sort reviews and return them (all reviews are now public)
+      const sortedReviews = allReviews
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
         .slice(0, limitCount);
 
-      return visibleReviews;
+      return sortedReviews;
     } catch (error) {
       console.error('Error fetching reviews:', error);
       throw error;

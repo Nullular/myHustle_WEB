@@ -3,8 +3,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Reviews collection rules
     match /reviews/{reviewId} {
-      // Anyone can read visible reviews
-      allow read: if resource.data.visible == true;
+      // Anyone can read reviews (public access for reviews display)
+      allow read: if true;
       
       // Only authenticated users can create reviews
       allow create: if request.auth != null 

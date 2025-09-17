@@ -146,14 +146,14 @@ export default function DesktopStoreProfileScreen({
         </div>
       </div>
 
-      {/* Detached Logo Element (original size, positioned at 1/8th vw left, 50vh top) */}
-      <div className="fixed left-[10vw] top-1/2 -translate-y-1/2 z-40 flex flex-col items-center pointer-events-none">
-        <div className="w-64 h-64 rounded-3xl p-6 bg-white shadow-2xl flex items-center justify-center">
+      {/* Detached Logo Element - Left side with 25px padding, max 150x150 */}
+      <div className="fixed left-[25px] top-1/2 -translate-y-1/2 z-40 flex flex-col items-center pointer-events-none">
+        <div className="w-[10vw] h-[10vw] max-w-[150px] max-h-[150px] rounded-2xl md:rounded-3xl p-[0.5vw] bg-white shadow-2xl flex items-center justify-center">
           {shop.logoUrl && !shop.logoUrl.startsWith('content://') ? (
             <img
               src={shop.logoUrl}
               alt={`${shop.name} logo`}
-              className="w-full h-full object-cover rounded-2xl"
+              className="w-full h-full object-cover rounded-xl md:rounded-2xl"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -161,31 +161,31 @@ export default function DesktopStoreProfileScreen({
               }}
             />
           ) : null}
-          <div className={`w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white font-bold text-4xl ${shop.logoUrl && !shop.logoUrl.startsWith('content://') ? 'hidden' : ''}`}>
+          <div className={`w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl md:rounded-2xl flex items-center justify-center text-white font-bold text-[2vw] ${shop.logoUrl && !shop.logoUrl.startsWith('content://') ? 'hidden' : ''}`}>
             {shop.name.charAt(0)}
           </div>
         </div>
-        {/* Store name and rating under logo */}
-        <div className="mt-4 flex flex-col items-center">
-          <h1 className="text-3xl font-bold mb-2 text-gray-900 drop-shadow-lg">{shop.name}</h1>
+        {/* Store name and rating under logo - Responsive text */}
+        <div className="mt-[0.5vw] flex flex-col items-center">
+          <h1 className="text-[1.8vw] font-bold mb-2 text-gray-900 drop-shadow-lg text-center max-w-[15vw]">{shop.name}</h1>
           <div className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-yellow-500"><Star className="h-6 w-6 inline-block" /></span>
-            <span className="text-xl font-bold text-gray-800">{shop.rating.toFixed(1)}</span>
+            <span className="text-[1.4vw] font-bold text-yellow-500"><Star className="h-[1.4vw] w-[1.4vw] inline-block" /></span>
+            <span className="text-[1.4vw] font-bold text-gray-800">{shop.rating.toFixed(1)}</span>
           </div>
         </div>
       </div>
 
-      {/* Scrollable Content Card */}
+      {/* Scrollable Content Card - 2/3 screen width */}
       <div className="pt-[50vh] min-h-screen overflow-y-auto scrollbar-hide z-20 relative">
-  <div className="max-w-[calc(50vw-64px)] mx-auto px-8 pb-20 pt-16">
-          <div className="bg-white rounded-t-3xl shadow-2xl">
-            <div className="p-12 space-y-12">
-              {/* Availability Section */}
-              <div className="neu-card-punched rounded-3xl p-8 bg-gray-50">
-                <h2 className="text-3xl font-bold mb-6 text-gray-900">Availability</h2>
-                <div className="flex items-center space-x-6">
-                  <div className={`w-6 h-6 rounded-full ${storeStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <p className="text-xl text-gray-800">
+        <div className="w-[66.67vw] mx-auto px-[2vw] pb-20 pt-12 md:pt-16">
+          <div className="bg-white rounded-t-2xl md:rounded-t-3xl shadow-2xl">
+            <div className="p-8 md:p-12 space-y-8 md:space-y-12">
+              {/* Availability Section - Responsive padding and text */}
+              <div className="neu-card-punched rounded-2xl md:rounded-3xl p-6 md:p-8 bg-gray-50">
+                <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-gray-900">Availability</h2>
+                <div className="flex items-center space-x-4 md:space-x-6">
+                  <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full ${storeStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <p className="text-lg md:text-xl text-gray-800">
                     <span className="font-semibold">{storeStatus.statusList[0]}</span>
                     {storeStatus.statusList[1] && (
                       <span className="text-gray-600"> - {storeStatus.statusList[1]}</span>
@@ -196,14 +196,14 @@ export default function DesktopStoreProfileScreen({
 
               {/* About Section */}
               <NeuDescriptionBox>
-                <h2 className="text-3xl font-bold mb-4 text-gray-900">About</h2>
-                <p className="text-xl text-gray-700 leading-8">{shop.description}</p>
+                <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-gray-900">About</h2>
+                <p className="text-lg md:text-xl text-gray-700 leading-6 md:leading-8">{shop.description}</p>
               </NeuDescriptionBox>
 
-              {/* Products Section */}
+              {/* Products Section - Responsive text */}
               {products.length > 0 && (
                 <NeuInsetBox>
-                  <h2 className="text-3xl font-bold mb-6 text-gray-900">Products</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-gray-900">Products</h2>
                   <div
                     ref={productsDrag.ref}
                     {...productsDrag.handlers}
@@ -218,10 +218,10 @@ export default function DesktopStoreProfileScreen({
                 </NeuInsetBox>
               )}
 
-              {/* Services Section */}
+              {/* Services Section - Responsive text */}
               {services.length > 0 && (
                 <NeuInsetBox>
-                  <h2 className="text-3xl font-bold mb-6 text-gray-900">Services</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-gray-900">Services</h2>
                   <div
                     ref={servicesDrag.ref}
                     {...servicesDrag.handlers}
@@ -247,49 +247,49 @@ export default function DesktopStoreProfileScreen({
                 />
               </NeuInsetBox>
 
-              {/* Contact Section */}
-              <div className="neu-card-punched rounded-3xl p-8 bg-gray-50">
-                <h2 className="text-3xl font-bold mb-6 text-gray-900">Contact Details</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-6">
-                    <MapPin className="h-9 w-9 text-blue-600" />
-                    <span className="text-xl text-gray-700">
+              {/* Contact Section - Responsive sizing */}
+              <div className="neu-card-punched rounded-2xl md:rounded-3xl p-6 md:p-8 bg-gray-50">
+                <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-gray-900">Contact Details</h2>
+                <div className="space-y-3 md:space-y-4">
+                  <div className="flex items-center space-x-4 md:space-x-6">
+                    <MapPin className="h-7 w-7 md:h-9 md:w-9 text-blue-600 flex-shrink-0" />
+                    <span className="text-lg md:text-xl text-gray-700 break-words">
                       {shop.address || shop.location || '123 Business Street, City'}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-6">
-                    <Phone className="h-9 w-9 text-blue-600" />
-                    <span className="text-xl text-gray-700">
+                  <div className="flex items-center space-x-4 md:space-x-6">
+                    <Phone className="h-7 w-7 md:h-9 md:w-9 text-blue-600 flex-shrink-0" />
+                    <span className="text-lg md:text-xl text-gray-700">
                       {shop.phone || '+1 (555) 123-4567'}
                     </span>
                   </div>
                 </div>
-                <button onClick={handleContactClick} disabled={contactLoading} className={`w-full mt-8 h-16 rounded-2xl bg-blue-600 text-white font-medium flex items-center justify-center space-x-4 ${contactLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                <button onClick={handleContactClick} disabled={contactLoading} className={`w-full mt-6 md:mt-8 h-12 md:h-16 rounded-xl md:rounded-2xl bg-blue-600 text-white font-medium flex items-center justify-center space-x-3 md:space-x-4 ${contactLoading ? 'opacity-60 cursor-not-allowed' : ''}`}>
                   {contactLoading ? (
-                    <svg className="animate-spin h-7 w-7 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                    <svg className="animate-spin h-5 w-5 md:h-7 md:w-7 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
                   ) : (
-                    <MessageCircle className="h-9 w-9" />
+                    <MessageCircle className="h-6 w-6 md:h-9 md:w-9" />
                   )}
-                  <span className="text-xl">{contactLoading ? 'Starting chat...' : 'Contact Store Owner'}</span>
+                  <span className="text-lg md:text-xl">{contactLoading ? 'Starting chat...' : 'Contact Store Owner'}</span>
                 </button>
-                {contactError && <div className="text-red-600 mt-2 text-center">{contactError}</div>}
+                {contactError && <div className="text-red-600 mt-2 text-center text-sm md:text-base">{contactError}</div>}
               </div>
 
-              {/* Store Management Section */}
+              {/* Store Management Section - Dynamic button sizing */}
               {user && shop.ownerId === user.id && (
-                <div className="neu-card-punched rounded-3xl p-12 bg-gradient-to-br from-purple-50 to-blue-50">
-                  <h2 className="text-3xl font-bold mb-10 text-gray-900">⚙️ Store Management</h2>
-                  <div className="flex space-x-6">
+                <div className="neu-card-punched rounded-2xl md:rounded-3xl p-8 md:p-12 bg-gradient-to-br from-purple-50 to-blue-50">
+                  <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-10 text-gray-900">⚙️ Store Management</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <Link href={`/store/${storeId}/booking-management`}>
-                      <div className="neu-button-punched w-[calc(1.5*200px)] h-[calc(1.5*300px)] rounded-2xl flex flex-col items-center justify-center space-y-4 bg-white hover:bg-purple-50 transition-colors">
-                        <Calendar className="h-12 w-12 text-purple-600" />
-                        <span className="text-xl font-medium text-purple-700">Booking Management</span>
+                      <div className="neu-button-punched w-full h-32 md:h-48 lg:h-60 rounded-xl md:rounded-2xl flex flex-col items-center justify-center space-y-2 md:space-y-4 bg-white hover:bg-purple-50 transition-colors">
+                        <Calendar className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-purple-600" />
+                        <span className="text-sm md:text-lg lg:text-xl font-medium text-purple-700 text-center px-2">Booking Management</span>
                       </div>
                     </Link>
                     <Link href={`/store/${storeId}/order-management`}>
-                      <div className="neu-button-punched w-[calc(1.5*200px)] h-[calc(1.5*300px)] rounded-2xl flex flex-col items-center justify-center space-y-4 bg-white hover:bg-blue-50 transition-colors">
-                        <ShoppingCart className="h-12 w-12 text-blue-600" />
-                        <span className="text-xl font-medium text-blue-700">Order Management</span>
+                      <div className="neu-button-punched w-full h-32 md:h-48 lg:h-60 rounded-xl md:rounded-2xl flex flex-col items-center justify-center space-y-2 md:space-y-4 bg-white hover:bg-blue-50 transition-colors">
+                        <ShoppingCart className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12 text-blue-600" />
+                        <span className="text-sm md:text-lg lg:text-xl font-medium text-blue-700 text-center px-2">Order Management</span>
                       </div>
                     </Link>
                   </div>
